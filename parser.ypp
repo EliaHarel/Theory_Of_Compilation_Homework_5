@@ -120,7 +120,7 @@ Funcs :        /*epsilon*/													         	{}
 FuncDecl :     RetType ID LPAREN Formals RPAREN LBRACE                     {VarsSymbolsTable_t->addScopeFromFunc(*($2->str), $4->varsVec, $1->type);
                                                                             FuncSymbolsTable_t->addFunc(*($2->str), $4->varsVec, $1->type, VarsSymbolsTable_t);}
 
-                   Statements RBRACE CScope	                              {}
+                   Statements RBRACE CScope	                              {FuncSymbolTable_t->afterFunc($1->type)}
 
 RetType :      Type														               {$$->type = $1->type;}
                   |  VOID												               {$$ = new utype(Types_enum::VOID_TYPE);}
@@ -144,7 +144,8 @@ Statement : 	LBRACE OScope Statements CScope RBRACE							   {}
 
                   | ID ASSIGN Exp SC								              	{VarsSymbolsTable_t->typeCheckAndAssign(*($1->str), $3->exp);}
                   | Call SC											              	{}
-                  | RETURN SC											              	{VarsSymbolsTable_t->checkRetType(Types(Types_enum::VOID_TYPE));}
+                  | RETURN SC											              	{VarsSymbolsTable_t->checkRetType(Types(Types_enum::VOID_TYPE));
+                                                                             FuncSymbolTable_t->printRet($1->type);}
                   | RETURN Exp SC									           		{VarsSymbolsTable_t->checkRetType($2->exp.type);}
                   | IfStart RPAREN OScope Statement CScope				                           {}
                   | IfStart RPAREN OScope Statement CScope ELSE OScope Statement	CScope			{}

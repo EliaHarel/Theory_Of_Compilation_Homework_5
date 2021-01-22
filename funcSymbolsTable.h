@@ -50,6 +50,83 @@ public:
         funcs_vec.emplace_back(id, ordered_args.size(), ordered_args, ret_type);
         curr_func++;
         funcs_map[id] = curr_func;
+
+        //print func
+        string func_dec = "define " + TypeTollvmStr(ret_type.getType()) + " " + funcs_vec[curr_func].getllvmName() + "(";
+        for(int i=0; i< ordered_args.size(); i++){
+            if(i>0){
+                func_dec += ", ";
+            }
+            func_dec+= TypeTollvmStr(ordered_args[i].getVarType().getType());
+        }
+        func_dec += ") {";
+        CodeBuffer::instance().emit(func_dec);
+        CodeBuffer::instance().emit("%locals = alloca [50 x i32]");
+    }
+
+    void afterFunc(Types type){
+        printRet(type);
+        CodeBuffer::instance().emit("}");
+    }
+
+    static void printRet(Types type){
+        string func_end;
+        if(type.getType() == Types_enum::SET_TYPE){
+            string ret_set = Expression::gimmeANewCuteVar();
+            CodeBuffer::instance().emit(ret_set + " = alloca [256 x i1]");
+            Expression new_var(type, ret_set);
+            Expression::handleSet(new_var, Expression(), "init");
+            func_end = "ret [256 x i1]* " + ret_set;
+        }else{
+            func_end = "ret " + TypeTollvmStr(type.getType()) + " " + defaultVal(type.getType());
+        }
+        CodeBuffer::instance().emit(func_end);
+    }
+
+    static string defaultVal (Types_enum type){
+        string val_str;
+        switch(type){
+            case Types_enum::INT_TYPE :
+                val_str = "0";
+                break;
+            case Types_enum::BYTE_TYPE :
+                val_str = "0";
+                break;
+            case Types_enum::BOOL_TYPE :
+                val_str = "0";
+                break;
+            case Types_enum::VOID_TYPE :
+                val_str = "";
+                break;
+            default:
+                break;
+        }
+        return type_str;
+
+    }
+
+    static string TypeTollvmStr (Types_enum type){
+        string type_str;
+        switch(type){
+            case Types_enum::INT_TYPE :
+                type_str = "i32";
+                break;
+            case Types_enum::BYTE_TYPE :
+                type_str = "i32";
+                break;
+            case Types_enum::BOOL_TYPE :
+                type_str = "i1";
+                break;
+            case Types_enum::VOID_TYPE :
+                type_str = "void";
+                break;
+            case Types_enum::SET_TYPE :
+                type_str = "[256 x i1]*";
+                break;
+            default:
+                break;
+        }
+        return type_str;
     }
 
     Types checkFunc(const std::string& id, std::vector<Types> types_vec){

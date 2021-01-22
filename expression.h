@@ -33,6 +33,9 @@ public:
 
     Expression(Types_enum t, const string& str) : type(t), var_name(str) {};
 
+    Expression(const Types& t, const string& str) : type(t), var_name(str) {};
+
+
     ~Expression() = default;
 
     Expression(const Expression &rhs) : type(rhs.type), var_name(rhs.var_name) {};
@@ -415,7 +418,7 @@ public:
             exit(1);
         }
 
-        string reg = handleSet(*this, Exp(), "sum");
+        string reg = handleSet(*this, Expression(), "sum");
         Expression new_var(Types_enum::INT_TYPE, reg);
 
         return new_var;

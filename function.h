@@ -29,6 +29,10 @@ public:
     Types getRetType(){
         return ret_type;
     }
+
+    string getllvmName(){
+        return "@_" + ID;
+    }
 };
 
 #endif //HOMEWORK_3_FUNCTION_H
