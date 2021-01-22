@@ -1,4 +1,0 @@
-C:\Users\eliar\AppData\Local\JetBrains\CLion2020.3\cygwin_cmake\bin\cmake.exe -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/usr/bin/make.exe -G "CodeBlocks - Unix Makefiles" /cygdrive/c/E.R/Programming/Git/GitHub/Theory_Of_Compilation_Homework_5
--- Configuring done
--- Generating done
--- Build files have been written to: /cygdrive/c/E.R/Programming/Git/GitHub/Theory_Of_Compilation_Homework_5/cmake-build-debug
