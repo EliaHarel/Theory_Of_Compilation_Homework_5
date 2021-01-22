@@ -1,0 +1,210 @@
+%{
+   #include "testsFile.cpp"   //              DONT FORGET TO REMOVE THISE
+   #include "attributes.hpp"
+	#define YYERROR_VERBOSE 1
+	#define YYDEBUG 1
+	#include "hw3_output.hpp"
+	#include "varsSymbolsTable.h"
+	#include "enums.h"
+	#include "statement.h"
+	using namespace std;
+	using namespace output;
+	extern int yylineno;
+	extern int yylex();
+	int yyerror(const char * message);
+	FuncSymbolsTable* FuncSymbolsTable_t;
+	VarsSymbolsTable* VarsSymbolsTable_t;
+	#define PPP printf("line number %d \n", __LINE__);
+%}
+
+%token LBRACE
+%token RBRACE
+%token VOID
+%token INT
+%token BYTE
+%token B
+%token BOOL
+%token SET
+
+%token TRUE
+//%token <bo> TRUE
+
+%token FALSE
+//%token <bo> FALSE
+
+%token RETURN
+%token IF
+%token WHILE
+
+%token BREAK
+//%token <str> BREAK
+
+%token CONTINUE
+//%token <str> CONTINUE
+
+%token SC
+%token COMMA
+%token DOTS
+%token ID
+//%token <str> ID
+%token NUM
+//%token <num> NUM
+%token STRING
+%token SPACE
+%token ERROR_CHAR
+
+
+
+%right ASSIGN
+%left OR
+%left AND
+
+%left RELOP_EQ_2L
+%nonassoc RELOP_GT_1N
+
+%nonassoc RELOP_IN
+
+%left BINOP_ADD_L2
+%left BINOP_MUL_L1
+%left NOT
+
+%left LPAREN
+%left RPAREN
+%nonassoc ELSE
+%left LBRACKET
+%left RBRACKET
+
+
+
+//%type <exp> Exp
+//%type <type> Type
+//%type <type> Call
+//%type <type> RetType
+//%type <varsVec> Formals
+//%type <varsVec> FormalsList
+//%type <varsVec> FormalDecl
+//%type <typesVec> ExpList
+//%token <bo> TRUE
+//%token <bo> FALSE
+//%token <str> BREAK
+//%token <str> CONTINUE
+//%token <str> ID
+//%token <num> NUM
+
+
+// %destructor { delete $$; } BREAK CONTINUE ID
+// %destructor { delete $$; } Exp
+// %destructor { delete $$; } Formals
+// %destructor { delete $$; } ExpList
+
+
+
+%%
+
+Program :      Global Funcs CGlobal														{}
+
+Global:        /*epsilon*/	                                                {FuncSymbolsTable_t = new FuncSymbolsTable();
+																										VarsSymbolsTable_t = new VarsSymbolsTable();
+																										VarsSymbolsTable_t->setFuncsTable(FuncSymbolsTable_t);
+																										VarsSymbolsTable_t->addFirstScope();}
+
+CGlobal:       /*epsilon*/	                                                {VarsSymbolsTable_t->deleteScope(true);
+																										delete VarsSymbolsTable_t;
+																										delete FuncSymbolsTable_t;
+}
+
+
+Funcs :        /*epsilon*/													         	{}
+                  | FuncDecl Funcs									         		{}
+
+FuncDecl :     RetType ID LPAREN Formals RPAREN LBRACE                     {VarsSymbolsTable_t->addScopeFromFunc(*($2->str), $4->varsVec, $1->type);
+                                                                            FuncSymbolsTable_t->addFunc(*($2->str), $4->varsVec, $1->type, VarsSymbolsTable_t);}
+
+                   Statements RBRACE CScope	                              {}
+
+RetType :      Type														               {$$->type = $1->type;}
+                  |  VOID												               {$$ = new utype(Types_enum::VOID_TYPE);}
+
+Formals :      /*epsilon*/													            {$$ = new utype(std::vector<Var>());}
+                  | FormalsList										              	{$$->varsVec = $1->varsVec;}
+
+FormalsList : 	FormalDecl												              	{$$->varsVec = $1->varsVec;}
+                  | FormalDecl COMMA FormalsList				     				{$3->varsVec.push_back($1->varsVec.at(0));
+																										$$->varsVec = $3->varsVec;}
+
+FormalDecl : 	Type ID													               {$$->varsVec = std::vector<Var>(1, Var(*($2->str), $1->type));}
+
+Statements :   Statement											              	   {}
+                  | Statements Statement							              	{}
+
+Statement : 	LBRACE OScope Statements CScope RBRACE							   {}
+                  | Type ID SC										              	{VarsSymbolsTable_t->addVar(*($2->str), $1->type);}
+                  | Type ID ASSIGN Exp SC							              	{$4->exp.typeCheck($1->type);
+                                                                            VarsSymbolsTable_t->addVarWithExp(*($2->str), $1->type, $4->exp);}
+
+                  | ID ASSIGN Exp SC								              	{VarsSymbolsTable_t->typeCheckAndAssign(*($1->str), $3->exp);}
+                  | Call SC											              	{}
+                  | RETURN SC											              	{VarsSymbolsTable_t->checkRetType(Types(Types_enum::VOID_TYPE));}
+                  | RETURN Exp SC									           		{VarsSymbolsTable_t->checkRetType($2->exp.type);}
+                  | IfStart RPAREN OScope Statement CScope				                           {}
+                  | IfStart RPAREN OScope Statement CScope ELSE OScope Statement	CScope			{}
+                  | WhileStart RPAREN OScope OWhile Statement CScope			                     {}
+                  | BREAK SC													         {VarsSymbolsTable_t->checkWhile(*($1->str));}
+                  | CONTINUE SC												         {VarsSymbolsTable_t->checkWhile(*($1->str));}
+
+OWhile:         /*epsilon*/                                                {VarsSymbolsTable_t->setWhile();}
+
+IfStart:          IF LPAREN Exp                                            {Statement::checkExp($3->exp);}
+
+WhileStart:       WHILE LPAREN Exp                                         {Statement::checkExp($3->exp);}
+
+Call :         ID LPAREN ExpList RPAREN									         {$$->type = FuncSymbolsTable_t->checkFunc(*($1->str), $3->typesVec);}
+                  | ID LPAREN RPAREN							      				{$$->type = FuncSymbolsTable_t->checkFunc(*($1->str), std::vector<Types>());}
+
+ExpList :         Exp														         	{$$->typesVec = std::vector<Types>(1, $1->exp.type);}
+                  | Exp COMMA ExpList							      				{$3->typesVec.push_back($1->exp.type);
+																										$$->typesVec = $3->typesVec;}
+
+Type :         INT															            {$$ = new utype(Types_enum::INT_TYPE);}
+                  | BYTE													         	{$$ = new utype(Types_enum::BYTE_TYPE);}
+                  | BOOL													         	{$$ = new utype(Types_enum::BOOL_TYPE);}
+                  | SET LBRACKET NUM DOTS NUM RBRACKET			   			{$$ = new utype(setCheck(yylineno, $3->num, $5->num));}
+
+OScope :       /*epsilon*/                                                 {VarsSymbolsTable_t->addScope();}
+
+CScope :       /*epsilon*/                                                 {VarsSymbolsTable_t->deleteScope();}
+
+Exp :          LPAREN Exp RPAREN								            			{$$ = new utype($2->exp);}
+                  | Exp BINOP_MUL_L1 Exp							         		{$$ = new utype($1->exp.binopMulDiv($3->exp));}
+                  | Exp BINOP_ADD_L2 Exp							         		{$$ = new utype($1->exp.binopAddSub($3->exp));}
+                  | ID											            			{$$ = new utype(VarsSymbolsTable_t->getExp(*($1->str)));}
+                  | Call										         				{$$ = new utype($1->type);}
+                  | NUM											             			{$$ = new utype(printNum($1->num, Types_enum::INT_TYPE));}
+                  | NUM B										         				{$$ = new utype(printNum($1->num, Types_enum::BYTE_TYPE));}
+                  | STRING													            {$$ = new utype(Types_enum::STRING_TYPE);}
+                  | TRUE														         {$$ = new utype(Types_enum::BOOL_TYPE);}
+                  | FALSE														         {$$ = new utype(Types_enum::BOOL_TYPE);}
+                  | NOT Exp													         {$$ = new utype($2->exp.opNot());}
+                  | Exp AND Exp												         {$$ = new utype($1->exp.opAnd($4->exp));}
+                  | Exp OR Exp												         {$$ = new utype($1->exp.opOr($4->exp));}
+                  | Exp RELOP_GT_1N Exp											   {$$ = new utype($1->exp.relop($3->exp));}
+                  | Exp RELOP_IN Exp											      {$$ = new utype($1->exp.in($3->exp));}
+                  | Exp RELOP_EQ_2L Exp											   {$$ = new utype($1->exp.relop($3->exp)));}
+                  | LPAREN Type RPAREN Exp									      {$$ = new utype(Expression($4->exp.cast($2->type));}
+
+M :            /*epsilon*/                                                 {$$ = new utype(CodeBuffer::instance().genLabel();)}
+
+%%
+
+main(){
+   testsFunctionMain();
+   //yyparse();
+
+}
+
+int yyerror(char const* s){
+   output::errorSyn(yylineno);
+   exit(1);
+}
+
+
