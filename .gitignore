@@ -1,4 +1,6 @@
 **/~Archive/**
+**/.idea/*
+**/cmake-build-*/*
 
 
 # Prerequisites
