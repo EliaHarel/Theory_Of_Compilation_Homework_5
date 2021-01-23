@@ -12,6 +12,8 @@
 #include "bp.hpp"
 
 
+extern int yylineno;
+
 typedef std::string Label;
 
 class Expression {
