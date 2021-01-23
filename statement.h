@@ -11,15 +11,18 @@
 class Statement_c {
 public:
     std::vector<pair<int, BranchLabelIndex>> next_list = std::vector<pair<int, BranchLabelIndex>>();
-
+    std::vector<pair<int, BranchLabelIndex>> break_list = std::vector<pair<int, BranchLabelIndex>>();
+    std::vector<pair<int, BranchLabelIndex>> continue_list = std::vector<pair<int, BranchLabelIndex>>();
     Statement_c() = default;
 
     ~Statement_c() = default;
 
-    Statement_c(const Statement_c &rhs) : next_list(rhs.next_list) {};
+    Statement_c(const Statement_c &rhs) : next_list(rhs.next_list), break_list(rhs.break_list), continue_list(rhs.continue_list) {};
 
     Statement_c &operator=(const Statement_c &rhs) {
         next_list = rhs.next_list;
+        continue_list = rhs.continue_list;
+        break_list = rhs.break_list;
         return *this;
     }
 
@@ -37,11 +40,13 @@ public:
         }
     }
 
-
     static Statement_c ifBlock(const Expression &exp, const std::string &marker, const Statement_c &rhs) {
         CodeBuffer::instance().bpatch(exp.true_list, marker);
         Statement_c new_statement;
         new_statement.next_list = CodeBuffer::merge(exp.false_list, rhs.next_list);
+
+        new_statement.break_list = rhs.break_list;
+        new_statement.continue_list = rhs.continue_list;
         return new_statement;
     }
 
@@ -52,6 +57,10 @@ public:
         Statement_c new_statement;
         auto temp_list = CodeBuffer::merge(stm1.next_list, n.next_list);
         new_statement.next_list = CodeBuffer::merge(temp_list, stm2.next_list);
+
+        new_statement.break_list = CodeBuffer::merge(stm1.break_list, stm2.break_list);
+        new_statement.continue_list = CodeBuffer::merge(stm1.continue_list, stm2.continue_list);
+
         return new_statement;
     }
 
@@ -59,8 +68,11 @@ public:
                                    const Statement_c& stm){
         CodeBuffer::instance().bpatch(stm.next_list, marker1);
         CodeBuffer::instance().bpatch(exp.true_list, marker2);
+        CodeBuffer::instance().bpatch(stm.continue_list, marker1);
+
         Statement_c new_statement;
-        new_statement.next_list = exp.false_list;
+
+        new_statement.next_list = CodeBuffer::merge(exp.false_list, stm.break_list);
         CodeBuffer::instance().emit("br label %" + marker1);
         return new_statement;
     }
@@ -70,7 +82,20 @@ public:
         Statement_c new_statement;
         new_statement.next_list = stm2.next_list;
         return new_statement;
+    }
 
+    static Statement_c breakComm(){
+        int loc =CodeBuffer::instance().emit("br label @");
+        Statement_c new_statement;
+        new_statement.break_list.emplace_back(pair<int, BranchLabelIndex>(loc, FIRST));
+        return new_statement;
+    }
+
+    static Statement_c continueComm(){
+        int loc =CodeBuffer::instance().emit("br label @");
+        Statement_c new_statement;
+        new_statement.continue_list.emplace_back(pair<int, BranchLabelIndex>(loc, FIRST));
+        return new_statement;
     }
 
 };
