@@ -17,16 +17,19 @@ extern int yylineno;
 typedef std::string Label;
 
 class Expression {
-    vector<pair<int, BranchLabelIndex>> true_list = vector<pair<int, BranchLabelIndex>>();
-    vector<pair<int, BranchLabelIndex>> false_list = vector<pair<int, BranchLabelIndex>>();
     static int new_var_counter;
     bool isNum() const{ return type == Types_enum::INT_TYPE || type == Types_enum::BYTE_TYPE; }
 
 public:
+    vector<pair<int, BranchLabelIndex>> true_list = vector<pair<int, BranchLabelIndex>>();
+    vector<pair<int, BranchLabelIndex>> false_list = vector<pair<int, BranchLabelIndex>>();
     Types type;
     std::string var_name;
 
     Expression() : type(Types_enum::UNDEFINED_TYPE), var_name(gimmeANewCuteVar()){};
+
+    Expression(const Expression& rhs) : type(rhs.type), var_name(rhs.var_name),
+                                        true_list(rhs.true_list), false_list(rhs.false_list){};
 
     explicit Expression(const Types& t) : type(t), var_name(gimmeANewCuteVar()){};
 
@@ -36,11 +39,8 @@ public:
 
     Expression(const Types& t, const std::string& str) : type(t), var_name(str){};
 
-
     ~Expression() = default;
 
-    Expression(const Expression& rhs) : type(rhs.type), var_name(rhs.var_name),
-                                        true_list(rhs.true_list), false_list(rhs.false_list){};
 
     Expression& operator=(const Expression& rhs){
         if(this == &rhs){ return *this; }
@@ -56,102 +56,71 @@ public:
             output::errorMismatch(yylineno);
             exit(1);
         }
-//        Expression new_var(Types_enum::BOOL_TYPE);
-//        CodeBuffer::instance().emit(new_var.var_name + " = sub i1 1, " + var_name);
         Expression new_var(*this);
         new_var.false_list = this->true_list;
         new_var.true_list = this->false_list;
         return new_var;
     }
 
-    Expression opOr(const Expression& t){
+    Expression opOr(const Expression& t, const std::string& next_instr){
+        if(type != Types_enum::BOOL_TYPE || t.type != Types_enum::BOOL_TYPE){
+            output::errorMismatch(yylineno);
+            exit(1);
+        }
+        CodeBuffer::instance().bpatch(this->false_list, next_instr);
+        Expression new_var(Types_enum::BOOL_TYPE);
+        new_var.true_list = CodeBuffer::merge(this->true_list, t.true_list);
+        new_var.false_list = t.false_list;
+        return new_var;
+    }
+
+    Expression opAnd(const Expression& t, const std::string& next_instr) const{
         if(type != Types_enum::BOOL_TYPE || t.type != Types_enum::BOOL_TYPE){
             output::errorMismatch(yylineno);
             exit(1);
         }
 
-
-        /*
-        int left_cond = CodeBuffer::instance().emit("br i1 " + var_name + ", label @, label @");
-        std::string false1_label = CodeBuffer::instance().genLabel();
-        int right_cond = CodeBuffer::instance().emit("br i1 " + t.var_name + ", label @, label @");
-
-        std::string false2_label = CodeBuffer::instance().genLabel();
-        std::string val1 = gimmeANewCuteVar();
-        CodeBuffer::instance().emit(val1 + " = add i1 0, 0");
-        int false_to_exit = CodeBuffer::instance().emit("br label @");
-
-        std::string true_label = CodeBuffer::instance().genLabel();
-        std::string val2 = gimmeANewCuteVar();
-        CodeBuffer::instance().emit(val2 + " = add i1 1, 0");
-        int true_to_exit = CodeBuffer::instance().emit("br label @");
-
-        std::string exit = CodeBuffer::instance().genLabel();
+        CodeBuffer::instance().bpatch(this->true_list, next_instr);
         Expression new_var(Types_enum::BOOL_TYPE);
-        std::string phi_comm =
-                new_var.var_name + " = phi i1 [ " + val1 + ", " + false2_label + " ], [ " + val2 + ", " +
-                true_label +
-                " ]";
-        CodeBuffer::instance().emit(phi_comm);
-
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({left_cond, FIRST}), true_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({right_cond, FIRST}), true_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({left_cond, SECOND}), false1_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({right_cond, SECOND}), false2_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({false_to_exit, FIRST}), exit);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({true_to_exit, FIRST}), exit);
-
-        return new_var;
-         */
-    }
-
-    Expression opAnd(const Expression& t){
-        if(type != Types_enum::BOOL_TYPE || t.type != Types_enum::BOOL_TYPE){
-            output::errorMismatch(yylineno);
-            exit(1);
-        }
-        int left_cond = CodeBuffer::instance().emit("br i1 " + var_name + ", label @, label @");
-        std::string true1_label = CodeBuffer::instance().genLabel();
-        int right_cond = CodeBuffer::instance().emit("br i1 " + var_name + ", label @, label @");
-
-        std::string false_label = CodeBuffer::instance().genLabel();
-        std::string val1 = gimmeANewCuteVar();
-        CodeBuffer::instance().emit(val1 + " = add i1 0, 0");
-        int false_to_exit = CodeBuffer::instance().emit("br label @");
-
-        std::string true2_label = CodeBuffer::instance().genLabel();
-        std::string val2 = gimmeANewCuteVar();
-        CodeBuffer::instance().emit(val2 + " = add i1 1, 0");
-        int true_to_exit = CodeBuffer::instance().emit("br label @");
-
-        std::string exit = CodeBuffer::instance().genLabel();
-        Expression new_var(Types_enum::BOOL_TYPE);
-        std::string phi_comm =
-                new_var.var_name + " = phi i1 [ " + val1 + ", " + false_label + " ], [ " + val2 + ", " +
-                true2_label +
-                " ]";
-        CodeBuffer::instance().emit(phi_comm);
-
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({left_cond, FIRST}), true1_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({right_cond, FIRST}), true2_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({left_cond, SECOND}), false_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({right_cond, SECOND}), false_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({false_to_exit, FIRST}), exit);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({true_to_exit, FIRST}), exit);
-
+        new_var.true_list = t.true_list;
+        new_var.false_list = CodeBuffer::merge(this->false_list, t.false_list);
         return new_var;
     }
 
-    Expression relop(const Expression& t){
+    Expression relop(const Expression& t, const std::string& op){
         if(!isNum() || !t.isNum()){
             output::errorMismatch(yylineno);
             exit(1);
         }
-        type = Types_enum::BOOL_TYPE;
-        return *this;
+        auto cond = gimmeANewCuteVar();
+        CodeBuffer::instance().emit(
+                cond + " = icmp " + auxRelop(op) + " i32 " + var_name + ", " + t.var_name);
+        int buffer_location = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
+        Expression new_var(Types_enum::BOOL_TYPE);
+        new_var.true_list = CodeBuffer::makelist({buffer_location, FIRST});
+        new_var.false_list = CodeBuffer::makelist({buffer_location, SECOND});
+        return new_var;
     }
 
-    Expression binopMulDiv(const Expression t, std::string& op){
+    static std::string auxRelop(const std::string& op){
+        std::string str;
+        if(op == "=="){
+            str = "eq";
+        }else if(op == "!="){
+            str = "ne";
+        }else if(op == "<="){
+            str = "ule";
+        }else if(op == ">="){
+            str = "uge";
+        }else if(op == "<"){
+            str = "ult";
+        }else{// op == ">"
+            str = "ugt";
+        }
+        return str;
+    }
+
+    Expression binopMulDiv(const Expression t, std::string& op) const{
         auto temp = byteIntCheck(*this, t);
         Expression new_var(temp);
         std::string op_llvm;
@@ -186,7 +155,6 @@ public:
 
         return new_var;
     }
-
 
     Expression binopAddSub(const Expression t, std::string& op){
         std::string op_llvm;
@@ -225,6 +193,18 @@ public:
             }
             return new_var;
         }
+    }
+
+    static Expression boolExp(bool b){
+
+        int buffer_location = CodeBuffer::instance().emit("br label @");
+        Expression new_var(Types_enum::BOOL_TYPE);
+        if(b){
+            new_var.true_list = CodeBuffer::makelist({buffer_location, FIRST});
+        }else{
+            new_var.false_list = CodeBuffer::makelist({buffer_location, FIRST});
+        }
+        return new_var;
     }
 
     static std::string handleSet(const Expression& src, const Expression& dst, const std::string& func){
@@ -300,7 +280,6 @@ public:
         }
         return sum_val;
     }
-
 
     Expression in(const Expression& t){
         if(!isNum() || t.type.getType() != Types_enum::SET_TYPE){

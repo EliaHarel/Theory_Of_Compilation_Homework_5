@@ -1,6 +1,7 @@
 %{
    #include "testsFile.cpp"   //              DONT FORGET TO REMOVE THISE
    #include "attributes.hpp"
+   #include "bp.hpp"
 	#define YYERROR_VERBOSE 1
 	#define YYDEBUG 1
 	#include "hw3_output.hpp"
@@ -134,7 +135,7 @@ FormalsList : 	FormalDecl												              	{$$->varsVec = $1->varsVec;}
 
 FormalDecl : 	Type ID													               {$$->varsVec = std::vector<Var>(1, Var(*($2->str), $1->type));}
 
-Statements :   Statement											              	   {}
+Statements :    Statement											              	   {}
                   | Statements Statement							              	{}
 
 Statement : 	LBRACE OScope Statements CScope RBRACE							   {}
@@ -147,18 +148,20 @@ Statement : 	LBRACE OScope Statements CScope RBRACE							   {}
                   | RETURN SC											              	{VarsSymbolsTable_t->checkRetType(Types(Types_enum::VOID_TYPE));
                                                                              FuncSymbolsTable_t->printRet($1->type);}
                   | RETURN Exp SC									           		{VarsSymbolsTable_t->checkRetType($2->exp.type);}
-                  | IfStart RPAREN OScope Statement CScope				                           {}
-                  | IfStart RPAREN OScope Statement CScope ELSE OScope Statement	CScope			{}
-                  | WhileStart RPAREN OScope OWhile Statement CScope			                     {}
+                  | IfStart RPAREN OScope M Statement CScope				                           {$$ = new utype(Statement_c::ifBlock($1->exp, ))}
+                  | IfStart RPAREN OScope M Statement N CScope M ELSE OScope  Statement	CScope	{}
+                  | WhileStart RPAREN OScope OWhile Statement CScope			                        {}
                   | BREAK SC													         {VarsSymbolsTable_t->checkWhile(*($1->str));}
                   | CONTINUE SC												         {VarsSymbolsTable_t->checkWhile(*($1->str));}
 
 OWhile:         /*epsilon*/                                                {VarsSymbolsTable_t->setWhile();}
 
-IfStart:          IF LPAREN Exp                                            {Statement::checkExp($3->exp);}
+IfStart:          IF LPAREN Exp                                            {Statement_c::checkExp($3->exp);
+																										$$ = new utype($3)}
 
-WhileStart:       WHILE LPAREN Exp                                         {Statement::checkExp($3->exp);}
-
+WhileStart:       WHILE LPAREN Exp                                         {Statement_c::checkExp($3->exp);
+																										$$ = new utype($3}
+																										
 Call :         ID LPAREN ExpList RPAREN									         {$$->type = FuncSymbolsTable_t->checkFunc(*($1->str), $3->typesVec);}
                   | ID LPAREN RPAREN							      				{$$->type = FuncSymbolsTable_t->checkFunc(*($1->str), std::vector<Types>());}
 
@@ -188,24 +191,28 @@ Exp :          LPAREN Exp RPAREN								            			{$$ = new utype($2->exp);
                   | NUM B										         				{Expression temp_exp = Expression::printNum($1->num, Types_enum::BYTE_TYPE);
                                                                               $$ = new utype(temp_exp);}
                   | STRING													            {$$ = new utype(Types_enum::STRING_TYPE);}
-                  | TRUE														         {$$ = new utype(Types_enum::BOOL_TYPE);}
-                  | FALSE														         {$$ = new utype(Types_enum::BOOL_TYPE);}
+                  | TRUE														         {Expression temp_exp = Expression::boolExp(true);
+																										$$ = new utype(temp_exp);}
+                  | FALSE														         {Expression temp_exp = Expression::boolExp(false);
+						                                                            $$ = new utype(temp_exp);}
                   | NOT Exp													         {Expression temp_exp = $2->exp.opNot();
                                                                               $$ = new utype(temp_exp);}
-                  | Exp AND Exp												         {Expression temp_exp = $1->exp.opAnd($3->exp);
+                  | Exp AND M Exp												         {Expression temp_exp = $1->exp.opAnd($4->exp, *($3->str));
                                                                               $$ = new utype(temp_exp);}
-                  | Exp OR Exp												         {Expression temp_exp = $1->exp.opOr($3->exp);
+                  | Exp OR M Exp												         {Expression temp_exp = $1->exp.opOr($4->exp, *($3->str));
                                                                               $$ = new utype(temp_exp);}
-                  | Exp RELOP_GT_1N Exp											   {Expression temp_exp = $1->exp.relop($3->exp);
+                  | Exp RELOP_GT_1N Exp											   {Expression temp_exp = $1->exp.relop($3->exp, *($2->str));
                                                                               $$ = new utype(temp_exp);}
                   | Exp RELOP_IN Exp											      {Expression temp_exp = $1->exp.in($3->exp);
                                                                               $$ = new utype(temp_exp);}
-                  | Exp RELOP_EQ_2L Exp											   {Expression temp_exp = $1->exp.relop($3->exp);
+                  | Exp RELOP_EQ_2L Exp											   {Expression temp_exp = $1->exp.relop($3->exp, *($2->str));
                                                                               $$ = new utype(temp_exp);}
                   | LPAREN Type RPAREN Exp									      {Expression temp_exp = ($4->exp.cast($2->type));
                                                                               $$ = new utype(temp_exp);}
 
-M :            /*epsilon*/                                                 {$$ = new utype(CodeBuffer::instance().genLabel();)}
+M :            /*epsilon*/                                                 {$$ = new utype(CodeBuffer::instance().genLabel());}
+
+N :            /*epsilon*/                                                 {$$ = new utype(Statement_c::NMarker());}
 
 %%
 

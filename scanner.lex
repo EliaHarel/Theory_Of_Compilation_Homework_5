@@ -41,9 +41,11 @@ continue                            {yylval = new utype(std::string(yytext));
 \[                                  return LBRACKET;
 \]                                  return RBRACKET;
 =                                   return ASSIGN;
-\<|\>|\<=|\>= 		    					return RELOP_GT_1N;
+\<|\>|\<=|\>= 		    					{yylval = new utype(std::string(yytext));
+													return RELOP_GT_1N;}
 in                                  return RELOP_IN;
-==|!=                               return RELOP_EQ_2L;
+==|!=                               {yylval = new utype(std::string(yytext));
+													return RELOP_EQ_2L;}
 \*|\/                               {yylval = new utype(std::string(yytext));
 													return BINOP_MUL_L1;}
 												
