@@ -135,32 +135,39 @@ FormalsList : 	FormalDecl												              	{$$->varsVec = $1->varsVec;}
 
 FormalDecl : 	Type ID													               {$$->varsVec = std::vector<Var>(1, Var(*($2->str), $1->type));}
 
-Statements :    Statement											              	   {}
-                  | Statements Statement							              	{}
+Statements :    Statement											              	   {(*$$)=(*$1);}
+                  | Statements M Statement							            {$$ = new utype(Statement_c::combineStatements($1->statement, *($2->str), $3->statement));}
 
-Statement : 	LBRACE OScope Statements CScope RBRACE							   {}
-                  | Type ID SC										              	{VarsSymbolsTable_t->addVar(*($2->str), $1->type);}
+Statement : 	LBRACE OScope Statements CScope RBRACE							   {(*$$) = (*$3);}
+                  | Type ID SC										              	{VarsSymbolsTable_t->addVar(*($2->str), $1->type);
+                                                                              $$ = new utype();}
                   | Type ID ASSIGN Exp SC							              	{$4->exp.typeCheck($1->type);
-                                                                            VarsSymbolsTable_t->addVarWithExp(*($2->str), $1->type, $4->exp);}
-
-                  | ID ASSIGN Exp SC								              	{VarsSymbolsTable_t->typeCheckAndAssign(*($1->str), $3->exp);}
-                  | Call SC											              	{}
+                                                                            VarsSymbolsTable_t->addVarWithExp(*($2->str), $1->type, $4->exp);
+                                                                              $$ = new utype();}
+                  | ID ASSIGN Exp SC								              	{VarsSymbolsTable_t->typeCheckAndAssign(*($1->str), $3->exp);
+                                                                              $$ = new utype();}
+                  | Call SC											              	{$$ = new utype();}
                   | RETURN SC											              	{VarsSymbolsTable_t->checkRetType(Types(Types_enum::VOID_TYPE));
-                                                                             FuncSymbolsTable_t->printRet($1->type);}
-                  | RETURN Exp SC									           		{VarsSymbolsTable_t->checkRetType($2->exp.type);}
-                  | IfStart RPAREN OScope M Statement CScope				                           {$$ = new utype(Statement_c::ifBlock($1->exp, ))}
-                  | IfStart RPAREN OScope M Statement N CScope M ELSE OScope  Statement	CScope	{}
-                  | WhileStart RPAREN OScope OWhile Statement CScope			                        {}
-                  | BREAK SC													         {VarsSymbolsTable_t->checkWhile(*($1->str));}
-                  | CONTINUE SC												         {VarsSymbolsTable_t->checkWhile(*($1->str));}
+                                                                             FuncSymbolsTable_t->printRet($1->type);
+                                                                              $$ = new utype();}
+                  | RETURN Exp SC									           		{VarsSymbolsTable_t->checkRetType($2->exp.type);
+                                                                              $$ = new utype();}
+                  | IfStart RPAREN OScope M Statement CScope				                           {$$ = new utype(Statement_c::ifBlock($1->exp, *($4->str), $5->statement));}
+                  | IfStart RPAREN OScope M Statement CScope ELSE N OScope M Statement	CScope	   {}//$$ = new utype(Statement_c::ifElseBlock($1->exp, *(4->str), $5->statement, $7->statement, *($10->str), $11->statement)); }
+                  | WhileStart RPAREN OScope OWhile M Statement CScope			                     {$$ = new utype(Statement_c::whileBlock(*($1->str), $1->exp, *($5->str), $6->statement));}
+                  | BREAK SC													         {VarsSymbolsTable_t->checkWhile(*($1->str));
+                                                                              $$ = new utype();}
+                  | CONTINUE SC												         {VarsSymbolsTable_t->checkWhile(*($1->str));
+                                                                              $$ = new utype();}
 
 OWhile:         /*epsilon*/                                                {VarsSymbolsTable_t->setWhile();}
 
 IfStart:          IF LPAREN Exp                                            {Statement_c::checkExp($3->exp);
-																										$$ = new utype($3)}
+																										(*$$) = (*$3);}
 
-WhileStart:       WHILE LPAREN Exp                                         {Statement_c::checkExp($3->exp);
-																										$$ = new utype($3}
+WhileStart:       WHILE LPAREN M Exp                                       {Statement_c::checkExp($4->exp);
+																										(*$$) = (*$4);
+																										*($$->str) = *($3->str);}
 																										
 Call :         ID LPAREN ExpList RPAREN									         {$$->type = FuncSymbolsTable_t->checkFunc(*($1->str), $3->typesVec);}
                   | ID LPAREN RPAREN							      				{$$->type = FuncSymbolsTable_t->checkFunc(*($1->str), std::vector<Types>());}
