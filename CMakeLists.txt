@@ -27,4 +27,4 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 ADD_EXECUTABLE(Homework_5
         ${BISON_Parser_OUTPUTS} ${FLEX_Lexer_OUTPUTS}
         attributes.hpp enums.h funcSymbolsTable.cpp function.h globalFuncs.cpp hw3_output.cpp scope.h
-        statement.h var.cpp varsSymbolsTable.h expression.h expression.cpp)
+        statement.h var.cpp varsSymbolsTable.h expression.h expression.cpp bp.cpp)

@@ -139,7 +139,7 @@ public:
         return *this;
     }
 
-    Expression binopMulDiv(const Expression &t, std::string &op) const {
+    Expression binopMulDiv( Expression t, std::string &op) {
         auto temp = byteIntCheck(*this, t);
         Expression new_var(temp);
         std::string op_llvm;
@@ -176,7 +176,7 @@ public:
     }
 
 
-    Expression binopAddSub(const Expression &t, std::string &op) {
+    Expression binopAddSub(const Expression t, std::string &op) {
         std::string op_llvm;
         if (op == "+") { op_llvm = "add"; }
         else op_llvm = "sub"; //op == "-"
@@ -241,7 +241,7 @@ public:
         CodeBuffer::instance().emit(src_var + " = " + src_comm);
 
         if (func == "copy") {
-            sring val = gimmeANewCuteVar();
+            string val = gimmeANewCuteVar();
             CodeBuffer::instance().emit(val + " = load i1, i1* " + src_var);
             string dst_var = gimmeANewCuteVar();
             std::string dst_comm = "getelementptr [256 * i1], [256 * i1]* " + dst.var_name + " i1 0, i1 " + counter;
@@ -252,9 +252,9 @@ public:
         } else { // func == "sum"
             string temp_sum = gimmeANewCuteVar();
             CodeBuffer::instance().emit(temp_sum + " = load i32, i32* " + sum);
-            sring val_from_set = gimmeANewCuteVar();
+            string val_from_set = gimmeANewCuteVar();
             CodeBuffer::instance().emit(val_from_set + " = load i1, i1* " + src_var);
-            sring val_from_set_i32 = gimmeANewCuteVar();
+            string val_from_set_i32 = gimmeANewCuteVar();
             CodeBuffer::instance().emit(val_from_set_i32 + " = zext i1 " + val_from_set + " to i32");
             string add = gimmeANewCuteVar();
             print3ACArithmetic(add,val_from_set_i32, "add", temp_sum);
@@ -262,11 +262,10 @@ public:
         }
 
         string index = gimmeANewCuteVar();
-        print3ACArithmetic(index, counter, "add", 1);
+        print3ACArithmetic(index, counter, "add", "1");
         int to_phi2 = CodeBuffer::instance().emit("br label @");
 
         string phi = CodeBuffer::instance().genLabel();
-        string counter = gimmeANewCuteVar();
         string phi_comm = counter + " = phi i32 [ 0, " + init + " ], [ " + index + ", " + false_label + " ]";
 
         int to_loop = CodeBuffer::instance().emit("br label @");
@@ -284,7 +283,7 @@ public:
             sum_val = gimmeANewCuteVar();
             CodeBuffer::instance().emit(sum_val + " = load i32, i32* " + sum);
         }
-        return sum_val
+        return sum_val;
     }
 
 
@@ -358,6 +357,7 @@ public:
         }
         CodeBuffer::instance().emit("call void @exit(i32 1)");
 
+        int irrelevant = CodeBuffer::instance().emit("br label @");
 
         string true1_label = CodeBuffer::instance().genLabel();
         string cond2_name = gimmeANewCuteVar();
@@ -372,6 +372,7 @@ public:
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({cond2_loc, FIRST}), true2_label);
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({cond1_loc, SECOND}), false_label);
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({cond2_loc, SECOND}), false_label);
+        CodeBuffer::instance().bpatch(CodeBuffer::makelist({irrelevant, FIRST}), true1_label);
 
     }
 

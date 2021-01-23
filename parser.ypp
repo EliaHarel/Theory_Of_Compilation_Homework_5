@@ -120,7 +120,7 @@ Funcs :        /*epsilon*/													         	{}
 FuncDecl :     RetType ID LPAREN Formals RPAREN LBRACE                     {VarsSymbolsTable_t->addScopeFromFunc(*($2->str), $4->varsVec, $1->type);
                                                                             FuncSymbolsTable_t->addFunc(*($2->str), $4->varsVec, $1->type, VarsSymbolsTable_t);}
 
-                   Statements RBRACE CScope	                              {FuncSymbolTable_t->afterFunc($1->type)}
+                   Statements RBRACE CScope	                              {FuncSymbolsTable_t->afterFunc($1->type);}
 
 RetType :      Type														               {$$->type = $1->type;}
                   |  VOID												               {$$ = new utype(Types_enum::VOID_TYPE);}
@@ -145,7 +145,7 @@ Statement : 	LBRACE OScope Statements CScope RBRACE							   {}
                   | ID ASSIGN Exp SC								              	{VarsSymbolsTable_t->typeCheckAndAssign(*($1->str), $3->exp);}
                   | Call SC											              	{}
                   | RETURN SC											              	{VarsSymbolsTable_t->checkRetType(Types(Types_enum::VOID_TYPE));
-                                                                             FuncSymbolTable_t->printRet($1->type);}
+                                                                             FuncSymbolsTable_t->printRet($1->type);}
                   | RETURN Exp SC									           		{VarsSymbolsTable_t->checkRetType($2->exp.type);}
                   | IfStart RPAREN OScope Statement CScope				                           {}
                   | IfStart RPAREN OScope Statement CScope ELSE OScope Statement	CScope			{}
@@ -176,22 +176,34 @@ OScope :       /*epsilon*/                                                 {Vars
 CScope :       /*epsilon*/                                                 {VarsSymbolsTable_t->deleteScope();}
 
 Exp :          LPAREN Exp RPAREN								            			{$$ = new utype($2->exp);}
-                  | Exp BINOP_MUL_L1 Exp							         		{$$ = new utype($1->exp.binopMulDiv($3->exp));}
-                  | Exp BINOP_ADD_L2 Exp							         		{$$ = new utype($1->exp.binopAddSub($3->exp));}
-                  | ID											            			{$$ = new utype(VarsSymbolsTable_t->getExp(*($1->str)));}
+                  | Exp BINOP_MUL_L1 Exp							         		{Expression temp_exp = $1->exp.binopMulDiv($3->exp, *($2->str));
+                                                                              $$ = new utype(temp_exp);}
+                  | Exp BINOP_ADD_L2 Exp							         		{Expression temp_exp = $1->exp.binopAddSub($3->exp, *($2->str));
+                                                                              $$ = new utype(temp_exp);}
+                  | ID											            			{Expression temp_exp = VarsSymbolsTable_t->getExp(*($1->str));
+                                                                              $$ = new utype(temp_exp);}
                   | Call										         				{$$ = new utype($1->type);}
-                  | NUM											             			{$$ = new utype(printNum($1->num, Types_enum::INT_TYPE));}
-                  | NUM B										         				{$$ = new utype(printNum($1->num, Types_enum::BYTE_TYPE));}
+                  | NUM											             			{Expression temp_exp = Expression::printNum($1->num, Types_enum::INT_TYPE);
+                                                                              $$ = new utype(temp_exp);}
+                  | NUM B										         				{Expression temp_exp = Expression::printNum($1->num, Types_enum::BYTE_TYPE);
+                                                                              $$ = new utype(temp_exp);}
                   | STRING													            {$$ = new utype(Types_enum::STRING_TYPE);}
                   | TRUE														         {$$ = new utype(Types_enum::BOOL_TYPE);}
                   | FALSE														         {$$ = new utype(Types_enum::BOOL_TYPE);}
-                  | NOT Exp													         {$$ = new utype($2->exp.opNot());}
-                  | Exp AND Exp												         {$$ = new utype($1->exp.opAnd($4->exp));}
-                  | Exp OR Exp												         {$$ = new utype($1->exp.opOr($4->exp));}
-                  | Exp RELOP_GT_1N Exp											   {$$ = new utype($1->exp.relop($3->exp));}
-                  | Exp RELOP_IN Exp											      {$$ = new utype($1->exp.in($3->exp));}
-                  | Exp RELOP_EQ_2L Exp											   {$$ = new utype($1->exp.relop($3->exp)));}
-                  | LPAREN Type RPAREN Exp									      {$$ = new utype(Expression($4->exp.cast($2->type));}
+                  | NOT Exp													         {Expression temp_exp = $2->exp.opNot();
+                                                                              $$ = new utype(temp_exp);}
+                  | Exp AND Exp												         {Expression temp_exp = $1->exp.opAnd($3->exp);
+                                                                              $$ = new utype(temp_exp);}
+                  | Exp OR Exp												         {Expression temp_exp = $1->exp.opOr($3->exp);
+                                                                              $$ = new utype(temp_exp);}
+                  | Exp RELOP_GT_1N Exp											   {Expression temp_exp = $1->exp.relop($3->exp);
+                                                                              $$ = new utype(temp_exp);}
+                  | Exp RELOP_IN Exp											      {Expression temp_exp = $1->exp.in($3->exp);
+                                                                              $$ = new utype(temp_exp);}
+                  | Exp RELOP_EQ_2L Exp											   {Expression temp_exp = $1->exp.relop($3->exp);
+                                                                              $$ = new utype(temp_exp);}
+                  | LPAREN Type RPAREN Exp									      {Expression temp_exp = ($4->exp.cast($2->type));
+                                                                              $$ = new utype(temp_exp);}
 
 M :            /*epsilon*/                                                 {$$ = new utype(CodeBuffer::instance().genLabel();)}
 

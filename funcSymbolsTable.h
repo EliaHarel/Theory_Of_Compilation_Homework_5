@@ -38,7 +38,9 @@ public:
             exit(1);
         }
 
-        if(id.compare("main") == 0 && ret_type == Types_enum::VOID_TYPE && args.size() == 0){
+        int num_of_args = args.size();
+
+        if(id.compare("main") == 0 && ret_type == Types_enum::VOID_TYPE && num_of_args == 0){
             main_func = true;
         }
 
@@ -47,13 +49,13 @@ public:
             ordered_args.insert(ordered_args.begin(), iter);
         }
 
-        funcs_vec.emplace_back(id, ordered_args.size(), ordered_args, ret_type);
+        funcs_vec.emplace_back(id, num_of_args, ordered_args, ret_type);
         curr_func++;
         funcs_map[id] = curr_func;
 
         //print func
         string func_dec = "define " + TypeTollvmStr(ret_type.getType()) + " " + funcs_vec[curr_func].getllvmName() + "(";
-        for(int i=0; i< ordered_args.size(); i++){
+        for(int i=0; i< num_of_args; i++){
             if(i>0){
                 func_dec += ", ";
             }
@@ -62,6 +64,12 @@ public:
         func_dec += ") {";
         CodeBuffer::instance().emit(func_dec);
         CodeBuffer::instance().emit("%locals = alloca [50 x i32]");
+        CodeBuffer::instance().emit("%args = alloca [" + to_string(num_of_args) + " x i32]");
+        for(int i=0; i< num_of_args; i++){
+
+        }
+
+
     }
 
     void afterFunc(Types type){
@@ -101,7 +109,7 @@ public:
             default:
                 break;
         }
-        return type_str;
+        return val_str;
 
     }
 
