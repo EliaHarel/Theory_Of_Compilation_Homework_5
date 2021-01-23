@@ -20,7 +20,6 @@ class Expression {
     vector<pair<int, BranchLabelIndex>> true_list = vector<pair<int, BranchLabelIndex>>();
     vector<pair<int, BranchLabelIndex>> false_list = vector<pair<int, BranchLabelIndex>>();
     static int new_var_counter;
-
     bool isNum() const{ return type == Types_enum::INT_TYPE || type == Types_enum::BYTE_TYPE; }
 
 public:
@@ -60,9 +59,8 @@ public:
 //        Expression new_var(Types_enum::BOOL_TYPE);
 //        CodeBuffer::instance().emit(new_var.var_name + " = sub i1 1, " + var_name);
         Expression new_var(*this);
-        vector<pair<int, BranchLabelIndex>> temp = new_var.false_list;
-        new_var.false_list = new_var.true_list;
-        new_var.true_list = temp;
+        new_var.false_list = this->true_list;
+        new_var.true_list = this->false_list;
         return new_var;
     }
 
@@ -72,23 +70,25 @@ public:
             exit(1);
         }
 
+
+        /*
         int left_cond = CodeBuffer::instance().emit("br i1 " + var_name + ", label @, label @");
-        string false1_label = CodeBuffer::instance().genLabel();
+        std::string false1_label = CodeBuffer::instance().genLabel();
         int right_cond = CodeBuffer::instance().emit("br i1 " + t.var_name + ", label @, label @");
 
-        string false2_label = CodeBuffer::instance().genLabel();
-        string val1 = gimmeANewCuteVar();
+        std::string false2_label = CodeBuffer::instance().genLabel();
+        std::string val1 = gimmeANewCuteVar();
         CodeBuffer::instance().emit(val1 + " = add i1 0, 0");
         int false_to_exit = CodeBuffer::instance().emit("br label @");
 
-        string true_label = CodeBuffer::instance().genLabel();
-        string val2 = gimmeANewCuteVar();
+        std::string true_label = CodeBuffer::instance().genLabel();
+        std::string val2 = gimmeANewCuteVar();
         CodeBuffer::instance().emit(val2 + " = add i1 1, 0");
         int true_to_exit = CodeBuffer::instance().emit("br label @");
 
-        string exit = CodeBuffer::instance().genLabel();
+        std::string exit = CodeBuffer::instance().genLabel();
         Expression new_var(Types_enum::BOOL_TYPE);
-        string phi_comm =
+        std::string phi_comm =
                 new_var.var_name + " = phi i1 [ " + val1 + ", " + false2_label + " ], [ " + val2 + ", " +
                 true_label +
                 " ]";
@@ -102,6 +102,7 @@ public:
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({true_to_exit, FIRST}), exit);
 
         return new_var;
+         */
     }
 
     Expression opAnd(const Expression& t){
@@ -110,22 +111,22 @@ public:
             exit(1);
         }
         int left_cond = CodeBuffer::instance().emit("br i1 " + var_name + ", label @, label @");
-        string true1_label = CodeBuffer::instance().genLabel();
+        std::string true1_label = CodeBuffer::instance().genLabel();
         int right_cond = CodeBuffer::instance().emit("br i1 " + var_name + ", label @, label @");
 
-        string false_label = CodeBuffer::instance().genLabel();
-        string val1 = gimmeANewCuteVar();
+        std::string false_label = CodeBuffer::instance().genLabel();
+        std::string val1 = gimmeANewCuteVar();
         CodeBuffer::instance().emit(val1 + " = add i1 0, 0");
         int false_to_exit = CodeBuffer::instance().emit("br label @");
 
-        string true2_label = CodeBuffer::instance().genLabel();
-        string val2 = gimmeANewCuteVar();
+        std::string true2_label = CodeBuffer::instance().genLabel();
+        std::string val2 = gimmeANewCuteVar();
         CodeBuffer::instance().emit(val2 + " = add i1 1, 0");
         int true_to_exit = CodeBuffer::instance().emit("br label @");
 
-        string exit = CodeBuffer::instance().genLabel();
+        std::string exit = CodeBuffer::instance().genLabel();
         Expression new_var(Types_enum::BOOL_TYPE);
-        string phi_comm =
+        std::string phi_comm =
                 new_var.var_name + " = phi i1 [ " + val1 + ", " + false_label + " ], [ " + val2 + ", " +
                 true2_label +
                 " ]";
@@ -157,17 +158,17 @@ public:
         if(op == "*"){
             op_llvm = "mul";
         }else{
-            string cond = gimmeANewCuteVar();
+            std::string cond = gimmeANewCuteVar();
             CodeBuffer::instance().emit(cond + " = icmp eq i32 " + t.var_name + ", 0");
             int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
-            string true_label = CodeBuffer::instance().genLabel();
+            std::string true_label = CodeBuffer::instance().genLabel();
             //todo: save thr string in advance and add reference to it
             //todo: calling to functions!
             CodeBuffer::instance().emit("call i8* @print( i8* Error division by zero)");
             CodeBuffer::instance().emit("call void @exit(i32 1)");
             int true_to_exit = CodeBuffer::instance().emit("br label @");
 
-            string false_label = CodeBuffer::instance().genLabel();
+            std::string false_label = CodeBuffer::instance().genLabel();
             CodeBuffer::instance().bpatch(CodeBuffer::makelist({loc, FIRST}), true_label);
             CodeBuffer::instance().bpatch(CodeBuffer::makelist({loc, SECOND}), false_label);
             CodeBuffer::instance().bpatch(CodeBuffer::makelist({true_to_exit, FIRST}), false_label);
@@ -226,10 +227,10 @@ public:
         }
     }
 
-    static string handleSet(const Expression& src, const Expression& dst, const string& func){
+    static std::string handleSet(const Expression& src, const Expression& dst, const std::string& func){
 
-        string init = CodeBuffer::instance().genLabel();
-        string sum;
+        std::string init = CodeBuffer::instance().genLabel();
+        std::string sum;
         if(func == "sum"){
             sum = gimmeANewCuteVar();
             CodeBuffer::instance().emit(sum + " = alloca i32");
@@ -237,25 +238,25 @@ public:
         }
         int to_phi1 = CodeBuffer::instance().emit("br label @");
 
-        string loop = CodeBuffer::instance().genLabel();
-        string cond = gimmeANewCuteVar();
-        string counter = gimmeANewCuteVar();
+        std::string loop = CodeBuffer::instance().genLabel();
+        std::string cond = gimmeANewCuteVar();
+        std::string counter = gimmeANewCuteVar();
         CodeBuffer::instance().emit(cond + " = icmp eq i32 " + counter + ", 256");
         int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
 
-        string true_label = CodeBuffer::instance().genLabel();
+        std::string true_label = CodeBuffer::instance().genLabel();
         int to_after = CodeBuffer::instance().emit("br label @");
 
-        string false_label = CodeBuffer::instance().genLabel();
-        string src_var = gimmeANewCuteVar();
+        std::string false_label = CodeBuffer::instance().genLabel();
+        std::string src_var = gimmeANewCuteVar();
         std::string src_comm =
                 "getelementptr [256 * i1], [256 * i1]* " + src.var_name + " i1 0, i1 " + counter;
         CodeBuffer::instance().emit(src_var + " = " + src_comm);
 
         if(func == "copy"){
-            string val = gimmeANewCuteVar();
+            std::string val = gimmeANewCuteVar();
             CodeBuffer::instance().emit(val + " = load i1, i1* " + src_var);
-            string dst_var = gimmeANewCuteVar();
+            std::string dst_var = gimmeANewCuteVar();
             std::string dst_comm =
                     "getelementptr [256 * i1], [256 * i1]* " + dst.var_name + " i1 0, i1 " + counter;
             CodeBuffer::instance().emit(dst_var + " = " + src_comm);
@@ -263,26 +264,27 @@ public:
         }else if(func == "init"){
             CodeBuffer::instance().emit("store i1 0 , i1* " + src_var);
         }else{ // func == "sum"
-            string temp_sum = gimmeANewCuteVar();
+            std::string temp_sum = gimmeANewCuteVar();
             CodeBuffer::instance().emit(temp_sum + " = load i32, i32* " + sum);
-            string val_from_set = gimmeANewCuteVar();
+            std::string val_from_set = gimmeANewCuteVar();
             CodeBuffer::instance().emit(val_from_set + " = load i1, i1* " + src_var);
-            string val_from_set_i32 = gimmeANewCuteVar();
+            std::string val_from_set_i32 = gimmeANewCuteVar();
             CodeBuffer::instance().emit(val_from_set_i32 + " = zext i1 " + val_from_set + " to i32");
-            string add = gimmeANewCuteVar();
+            std::string add = gimmeANewCuteVar();
             print3ACArithmetic(add, val_from_set_i32, "add", temp_sum);
             CodeBuffer::instance().emit("store i32 " + add + ", i32* " + sum);
         }
 
-        string index = gimmeANewCuteVar();
+        std::string index = gimmeANewCuteVar();
         print3ACArithmetic(index, counter, "add", "1");
         int to_phi2 = CodeBuffer::instance().emit("br label @");
 
-        string phi = CodeBuffer::instance().genLabel();
-        string phi_comm = counter + " = phi i32 [ 0, " + init + " ], [ " + index + ", " + false_label + " ]";
+        std::string phi = CodeBuffer::instance().genLabel();
+        std::string phi_comm =
+                counter + " = phi i32 [ 0, " + init + " ], [ " + index + ", " + false_label + " ]";
 
         int to_loop = CodeBuffer::instance().emit("br label @");
-        string after = CodeBuffer::instance().genLabel();
+        std::string after = CodeBuffer::instance().genLabel();
 
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({to_phi1, FIRST}), phi);
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({loc, FIRST}), true_label);
@@ -291,7 +293,7 @@ public:
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({to_phi2, FIRST}), phi);
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({to_loop, FIRST}), loop);
 
-        string sum_val;
+        std::string sum_val;
         if(func == "sum"){
             sum_val = gimmeANewCuteVar();
             CodeBuffer::instance().emit(sum_val + " = load i32, i32* " + sum);
@@ -307,28 +309,28 @@ public:
         }
         checkSetVal(t, *this, "in");
         std::string loc_in_mem = getLocInSet(t, *this);
-        string val_in_mem = gimmeANewCuteVar();
+        std::string val_in_mem = gimmeANewCuteVar();
         CodeBuffer::instance().emit(val_in_mem + " = load i1, i1* " + loc_in_mem);
 
-        string cond = gimmeANewCuteVar();
+        std::string cond = gimmeANewCuteVar();
         CodeBuffer::instance().emit(cond + " = icmp eq i1 " + val_in_mem + ", 1");
         int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
 
-        string false_label = CodeBuffer::instance().genLabel();
-        string val1 = gimmeANewCuteVar();
+        std::string false_label = CodeBuffer::instance().genLabel();
+        std::string val1 = gimmeANewCuteVar();
         CodeBuffer::instance().emit(val1 + " = add i1 1, 0");
 
         int end_if_br_false = CodeBuffer::instance().emit("br label @");
 
-        string true_label = CodeBuffer::instance().genLabel();
-        string val2 = gimmeANewCuteVar();
+        std::string true_label = CodeBuffer::instance().genLabel();
+        std::string val2 = gimmeANewCuteVar();
         CodeBuffer::instance().emit(val2 + " = add i1 0, 0");
 
         int end_if_br_true = CodeBuffer::instance().emit("br label @");
 
-        string end_if_label = CodeBuffer::instance().genLabel();
+        std::string end_if_label = CodeBuffer::instance().genLabel();
         Expression new_var(Types_enum::BOOL_TYPE);
-        string phi_comm =
+        std::string phi_comm =
                 new_var.var_name + " = phi i1 [ " + val1 + ", " + false_label + " ], [ " + val2 + ", " +
                 true_label +
                 " ]";
@@ -351,16 +353,16 @@ public:
     }
 
     static void checkSetVal(const Expression& set, const Expression& num, const std::string& op){
-        string cond1_name = gimmeANewCuteVar();
+        std::string cond1_name = gimmeANewCuteVar();
         //sge: interprets the operands as signed values and yields true if op1 is greater than or equal to op2.
-        string cond1_code =
+        std::string cond1_code =
                 cond1_name + " = icmp sge i32 " + num.var_name + ", " +
                 to_string(set.type.getSetRange().first);
         CodeBuffer::instance().emit(cond1_code);
         int cond1_loc = CodeBuffer::instance().emit("br i1 " + cond1_name + ", label @, label @ ");
 
-        string false_label = CodeBuffer::instance().genLabel();
-        //todo: save thr string in advance and add reference to it
+        std::string false_label = CodeBuffer::instance().genLabel();
+        //todo: save thr  std::string in advance and add reference to it
         //todo: calling to functions!
         if(op == "add"){
             CodeBuffer::instance().emit("call i8* @print( i8* Error out of set range. Op: +)");
@@ -374,15 +376,15 @@ public:
 
         int irrelevant = CodeBuffer::instance().emit("br label @");
 
-        string true1_label = CodeBuffer::instance().genLabel();
-        string cond2_name = gimmeANewCuteVar();
+        std::string true1_label = CodeBuffer::instance().genLabel();
+        std::string cond2_name = gimmeANewCuteVar();
         //sle: interprets the operands as signed values and yields true if op1 is less than or equal to op2..
-        string cond2_code =
+        std::string cond2_code =
                 cond2_name + " = icmp sle i32 " + num.var_name + ", " +
                 to_string(set.type.getSetRange().second);
         CodeBuffer::instance().emit(cond2_code);
         int cond2_loc = CodeBuffer::instance().emit("br i1 " + cond2_name + ", label @, label @");
-        string true2_label = CodeBuffer::instance().genLabel();
+        std::string true2_label = CodeBuffer::instance().genLabel();
 
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({cond1_loc, FIRST}), true1_label);
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({cond2_loc, FIRST}), true2_label);
@@ -392,7 +394,7 @@ public:
 
     }
 
-    static string getLocInSet(const Expression& set, const Expression& num){
+    static std::string getLocInSet(const Expression& set, const Expression& num){
         std::string loc_in_arr = gimmeANewCuteVar();
         std::string loc_in_mem = gimmeANewCuteVar();
 
@@ -436,7 +438,7 @@ public:
             exit(1);
         }
 
-        string reg = handleSet(*this, Expression(), "sum");
+        std::string reg = handleSet(*this, Expression(), "sum");
         Expression new_var(Types_enum::INT_TYPE, reg);
 
         return new_var;
