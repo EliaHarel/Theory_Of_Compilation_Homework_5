@@ -233,6 +233,7 @@ public:
                 "getelementptr [256 * i1], [256 * i1]* " + src.var_name + " i1 0, i1 " + counter;
         CodeBuffer::instance().emit(src_var + " = " + src_comm);
 
+        //TODO: if this doesn't work - memcpy, memset
         if(func == "copy"){
             std::string val = gimmeANewCuteVar();
             CodeBuffer::instance().emit(val + " = load i1, i1* " + src_var);
@@ -295,31 +296,9 @@ public:
         CodeBuffer::instance().emit(cond + " = icmp eq i1 " + val_in_mem + ", 1");
         int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
 
-        std::string false_label = CodeBuffer::instance().genLabel();
-        std::string val1 = gimmeANewCuteVar();
-        CodeBuffer::instance().emit(val1 + " = add i1 1, 0");
-
-        int end_if_br_false = CodeBuffer::instance().emit("br label @");
-
-        std::string true_label = CodeBuffer::instance().genLabel();
-        std::string val2 = gimmeANewCuteVar();
-        CodeBuffer::instance().emit(val2 + " = add i1 0, 0");
-
-        int end_if_br_true = CodeBuffer::instance().emit("br label @");
-
-        std::string end_if_label = CodeBuffer::instance().genLabel();
         Expression new_var(Types_enum::BOOL_TYPE);
-        std::string phi_comm =
-                new_var.var_name + " = phi i1 [ " + val1 + ", " + false_label + " ], [ " + val2 + ", " +
-                true_label +
-                " ]";
-        CodeBuffer::instance().emit(phi_comm);
-
-
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({loc, SECOND}), false_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({loc, FIRST}), true_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({end_if_br_false, FIRST}), end_if_label);
-        CodeBuffer::instance().bpatch(CodeBuffer::makelist({end_if_br_true, FIRST}), end_if_label);
+        new_var.true_list = CodeBuffer::makelist({loc, FIRST});
+        new_var.false_list = CodeBuffer::makelist({loc, SECOND});
 
         return new_var;
     }
