@@ -426,7 +426,7 @@ public:
     static Expression call(const Types& type){ return Expression(type); }
 
     void typeCheck(const Types t){
-        if(t != type && !(type == Types_enum::BYTE_TYPE && t == Types_enum::INT_TYPE)){
+        if(t.getType() != type.getType() && !(type == Types_enum::BYTE_TYPE && t == Types_enum::INT_TYPE)){
             output::errorMismatch(yylineno);
             exit(1);
         }

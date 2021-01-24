@@ -67,6 +67,11 @@ public:
 
         CodeBuffer::instance().emit(func_dec);
         CodeBuffer::instance().emit("%locals = alloca [50 x i32]");
+        CodeBuffer::instance().emit("%locals_set = alloca [50 x [256 x i1]*]");
+        //TODO: check numbers
+        CodeBuffer::instance().emit("call void @llvm.memset.p0i8.i64(i8* @locals, i8 0, i64 1600 , i1 false)");
+        CodeBuffer::instance().emit("call void @llvm.memset.p0i8.i64(i8* @locals_set, i8 0, i64 400 , i1 false)");
+
         CodeBuffer::instance().emit("%args = alloca [" + arg_num_str + " x i32]");
         CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x [256 x i1]*");
 
@@ -106,15 +111,30 @@ public:
 
 
     static void returnExp (const Expression& exp){
-        if(exp.type != Types_enum::BOOL_TYPE){
-            CodeBuffer::instance().emit("ret " + TypeTollvmStr(exp.type.getType()) + " " + exp.var_name);
-        }else{
-            std::string true_label = CodeBuffer::instance().genLabel();
-            CodeBuffer::instance().emit("ret i1 1");
-            std::string false_label = CodeBuffer::instance().genLabel();
-            CodeBuffer::instance().emit("ret i1 0");
-            CodeBuffer::instance().bpatch(exp.true_list, true_label);
-            CodeBuffer::instance().bpatch(exp.false_list, false_label);
+        switch (exp.type.getType()) {
+            case Types_enum::INT_TYPE:
+            case Types_enum::BYTE_TYPE:
+                CodeBuffer::instance().emit("ret " + TypeTollvmStr(exp.type.getType()) + " " + exp.var_name);
+                break;
+            case Types_enum::BOOL_TYPE:
+            {
+                std::string true_label = CodeBuffer::instance().genLabel();
+                CodeBuffer::instance().emit("ret i1 1");
+                std::string false_label = CodeBuffer::instance().genLabel();
+                CodeBuffer::instance().emit("ret i1 0");
+                CodeBuffer::instance().bpatch(exp.true_list, true_label);
+                CodeBuffer::instance().bpatch(exp.false_list, false_label);
+                break;
+            }
+            case Types_enum::SET_TYPE:
+            {
+                std::string ret_val = Expression::gimmeANewCuteVar();
+
+                CodeBuffer::instance().emit("ret " + TypeTollvmStr(exp.type.getType()) + " " + ret_val);
+                break;
+            }
+            default:
+                break;
         }
     }
 
@@ -147,8 +167,6 @@ public:
         string type_str;
         switch (type) {
             case Types_enum::INT_TYPE :
-                type_str = "i32";
-                break;
             case Types_enum::BYTE_TYPE :
                 type_str = "i32";
                 break;
