@@ -20,32 +20,32 @@ class FuncSymbolsTable {
 public:
     FuncSymbolsTable() : curr_func(-1), funcs_vec(std::vector<Function>()),
                          funcs_map(std::map<std::string, int>()),
-                         main_func(false){}
+                         main_func(false) {}
 //    static FuncSymbolsTable *funcs_table;
 
 //    static FuncSymbolsTable& getSymbolFunc();
 
-    bool isDefined(const std::string& id){
+    bool isDefined(const std::string &id) {
         return funcs_map.find(id) != funcs_map.end();
     }
 
-    bool isValidName(const string& id, void* VarsSymbolsTable_t);
+    bool isValidName(const string &id, void *VarsSymbolsTable_t);
 
-    void addFunc(const std::string& id, const std::vector<Var>& args, Types ret_type,
-                 void* VarsSymbolsTable_t){
-        if(!isValidName(id, VarsSymbolsTable_t)){
+    void addFunc(const std::string &id, const std::vector<Var> &args, Types ret_type,
+                 void *VarsSymbolsTable_t) {
+        if (!isValidName(id, VarsSymbolsTable_t)) {
             errorDef(yylineno, id);
             exit(1);
         }
 
         int num_of_args = args.size();
 
-        if(id.compare("main") == 0 && ret_type == Types_enum::VOID_TYPE && num_of_args == 0){
+        if (id.compare("main") == 0 && ret_type == Types_enum::VOID_TYPE && num_of_args == 0) {
             main_func = true;
         }
 
         std::vector<Var> ordered_args;
-        for(auto& iter : args){ ordered_args.insert(ordered_args.begin(), iter); }
+        for (auto &iter : args) { ordered_args.insert(ordered_args.begin(), iter); }
 
         funcs_vec.emplace_back(id, num_of_args, ordered_args, ret_type);
         curr_func++;
@@ -55,8 +55,8 @@ public:
         string func_dec = "define " + TypeTollvmStr(ret_type.getType()) + " " +
                           funcs_vec[curr_func].getllvmName() + "(";
 
-        for(int i = 0; i < num_of_args; i++){
-            if(i > 0){
+        for (int i = 0; i < num_of_args; i++) {
+            if (i > 0) {
                 func_dec += ", ";
             }
             func_dec += TypeTollvmStr(ordered_args[i].getVarType().getType());
@@ -71,49 +71,56 @@ public:
         CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x [256 x i1]*");
 
 
-        std::string line_args;
-        std::string line_store;
-        for(int i = 0; i < num_of_args; i++){
+        for (int i = 0; i < num_of_args; i++) {
             std::string new_var_name = Expression::gimmeANewCuteVar();
-            if(ordered_args[i].getVarType().getType() == Types_enum::SET_TYPE){
-                line_args = (new_var_name + " = getelementptr [" + arg_num_str + " x [256 x i1]*], [" +
-                             arg_num_str + " x [256 x i1]*]* %args_set, [256 x i1]* 0, [256 x i1]* " +
-                             to_string(i));
-                line_store = "store [256 x i1]* %" + to_string(i) + ", [256 x i1]** " + new_var_name;
-            }else{
-                line_args = new_var_name + " = getelementptr [" + arg_num_str + " x i32], [" + arg_num_str +
-                            " x i32]* %args, i32 0, i32 " + to_string(i);
-                line_store = "store i32 %" + to_string(i) + ", i32* " + new_var_name;
+            if (ordered_args[i].getVarType().getType() == Types_enum::SET_TYPE) {
+                CodeBuffer::instance().emit(new_var_name + " = getelementptr [" + arg_num_str + " x [256 x i1]*], [" +
+                                            arg_num_str + " x [256 x i1]*]* %args_set, [256 x i1]* 0, [256 x i1]* " +
+                                            to_string(i));
+                CodeBuffer::instance().emit("store [256 x i1]* %" + to_string(i) + ", [256 x i1]** " + new_var_name);
+            } else if (ordered_args[i].getVarType() == Types_enum::BOOL_TYPE) {
+                CodeBuffer::instance().emit(
+                        new_var_name + " = getelementptr [" + arg_num_str + " x i32], [" + arg_num_str +
+                        " x i32]* %args, i32 0, i32 " + to_string(i));
+                std::string bool_name = Expression::gimmeANewCuteVar();
+                CodeBuffer::instance().emit(bool_name + " = zext i1 %" + to_string(i) + "  to i32");
+                CodeBuffer::instance().emit("store i32 %" + to_string(i) + ", i32* " + bool_name);
+            } else {
+                CodeBuffer::instance().emit(
+                        new_var_name + " = getelementptr [" + arg_num_str + " x i32], [" + arg_num_str +
+                        " x i32]* %args, i32 0, i32 " + to_string(i));
+                CodeBuffer::instance().emit("store i32 %" + to_string(i) + ", i32* " + new_var_name);
             }
-            CodeBuffer::instance().emit(line_args);
-            CodeBuffer::instance().emit(line_store);
         }
-
     }
 
 
-    void afterFunc(Types type){
+    static void afterFunc(const Types& type) {
         printRet(type);
         CodeBuffer::instance().emit("}");
     }
 
-    static void printRet(Types type){
-        string func_end;
-        if(type.getType() == Types_enum::SET_TYPE){
-            string ret_set = Expression::gimmeANewCuteVar();
-            CodeBuffer::instance().emit(ret_set + " = alloca [256 x i1]");
-            Expression new_var(type, ret_set);
-            Expression::handleSet(new_var, Expression(), "init");
-            func_end = "ret [256 x i1]* " + ret_set;
-        }else{
-            func_end = "ret " + TypeTollvmStr(type.getType()) + " " + defaultVal(type.getType());
-        }
-        CodeBuffer::instance().emit(func_end);
+    static void printRet(const Types& type) {
+        CodeBuffer::instance().emit("ret " + TypeTollvmStr(type.getType()) + " " + defaultVal(type.getType()));
     }
 
-    static string defaultVal(Types_enum type){
+
+    static void returnExp (const Expression& exp){
+        if(exp.type != Types_enum::BOOL_TYPE){
+            CodeBuffer::instance().emit("ret " + TypeTollvmStr(exp.type.getType()) + " " + exp.var_name);
+        }else{
+            std::string true_label = CodeBuffer::instance().genLabel();
+            CodeBuffer::instance().emit("ret i1 1");
+            std::string false_label = CodeBuffer::instance().genLabel();
+            CodeBuffer::instance().emit("ret i1 0");
+            CodeBuffer::instance().bpatch(exp.true_list, true_label);
+            CodeBuffer::instance().bpatch(exp.false_list, false_label);
+        }
+    }
+
+    static string defaultVal(Types_enum type) {
         string val_str;
-        switch (type){
+        switch (type) {
             case Types_enum::INT_TYPE :
                 val_str = "0";
                 break;
@@ -126,6 +133,9 @@ public:
             case Types_enum::VOID_TYPE :
                 val_str = "";
                 break;
+            case Types_enum::SET_TYPE :
+                val_str ="null";
+                break;
             default:
                 break;
         }
@@ -133,9 +143,9 @@ public:
 
     }
 
-    static string TypeTollvmStr(Types_enum type){
+    static string TypeTollvmStr(Types_enum type) {
         string type_str;
-        switch (type){
+        switch (type) {
             case Types_enum::INT_TYPE :
                 type_str = "i32";
                 break;
@@ -157,8 +167,8 @@ public:
         return type_str;
     }
 
-    Types checkFunc(const std::string& id, std::vector<Types> types_vec){
-        if(!isDefined(id)){
+    Types checkFunc(const std::string &id, std::vector<Types> types_vec) {
+        if (!isDefined(id)) {
             errorUndefFunc(yylineno, id);
             exit(1);
         }
@@ -166,20 +176,20 @@ public:
         std::vector<Var> args = funcs_vec[funcs_map[id]].args;
 
         std::vector<std::string> args_types;
-        for(auto& arg : args){
+        for (auto &arg : args) {
             args_types.emplace_back(enumToString(arg.getVarType()));
         }
 
-        if(args.size() != types_vec.size()){
+        if (args.size() != types_vec.size()) {
             errorPrototypeMismatch(yylineno, id, args_types);
             exit(1);
         }
 
         int back_index = types_vec.size() - 1;
-        for(int i = 0; i < args.size(); i++){
-            if(args[i].getVarType() != types_vec[back_index]){
-                if(!(args[i].getVarType() == Types_enum::INT_TYPE &&
-                     types_vec[back_index] == Types_enum::BYTE_TYPE)){
+        for (int i = 0; i < args.size(); i++) {
+            if (args[i].getVarType() != types_vec[back_index]) {
+                if (!(args[i].getVarType() == Types_enum::INT_TYPE &&
+                      types_vec[back_index] == Types_enum::BYTE_TYPE)) {
                     errorPrototypeMismatch(yylineno, id, args_types);
                     exit(1);
                 }
@@ -190,15 +200,15 @@ public:
         return funcs_vec[funcs_map[id]].getRetType();
     }
 
-    bool isMain(){
+    bool isMain() {
         return main_func;
     }
 
-    void removeFuncs(){
-        for(auto& func : funcs_vec){
+    void removeFuncs() {
+        for (auto &func : funcs_vec) {
             std::string ret_type = enumToString(func.getRetType());
             std::vector<std::string> args_types;
-            for(auto& arg : func.args){
+            for (auto &arg : func.args) {
                 args_types.emplace_back(enumToString(arg.getVarType()));
             }
             output::printID(func.getID(), 0, output::makeFunctionType(ret_type, args_types));

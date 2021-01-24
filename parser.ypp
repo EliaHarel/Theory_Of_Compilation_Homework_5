@@ -121,7 +121,7 @@ Funcs :        /*epsilon*/													         	{}
 FuncDecl :     RetType ID LPAREN Formals RPAREN LBRACE                     {VarsSymbolsTable_t->addScopeFromFunc(*($2->str), $4->varsVec, $1->type);
                                                                             FuncSymbolsTable_t->addFunc(*($2->str), $4->varsVec, $1->type, VarsSymbolsTable_t);}
 
-                   Statements M RBRACE CScope	                           {FuncSymbolsTable_t->afterFunc($1->type);
+                   Statements M RBRACE CScope	                           {FuncSymbolsTable::afterFunc($1->type);
                                                                             CodeBuffer::instance().bpatch($8->statement.next_list, *($9->str));}
 
 RetType :      Type														               {$$->type = $1->type;}
@@ -149,9 +149,10 @@ Statement : 	LBRACE OScope Statements CScope RBRACE							   {(*$$) = (*$3);}
                                                                               $$ = new utype();}
                   | Call SC											              	{$$ = new utype();}
                   | RETURN SC											              	{VarsSymbolsTable_t->checkRetType(Types(Types_enum::VOID_TYPE));
-                                                                             FuncSymbolsTable_t->printRet($1->type);
+                                                                             FuncSymbolsTable::printRet(Types(Types_enum::VOID_TYPE));
                                                                               $$ = new utype();}
                   | RETURN Exp SC									           		{VarsSymbolsTable_t->checkRetType($2->exp.type);
+                                                                              FuncSymbolsTable::returnExp($2->exp);
                                                                               $$ = new utype();}
                   | IfStart RPAREN OScope M Statement CScope				                           {$$ = new utype(Statement_c::ifBlock($1->exp, *($4->str), $5->statement));}
                   | IfStart RPAREN OScope M Statement CScope ELSE N OScope M Statement	CScope	   {$$ = new utype(Statement_c::ifElseBlock($1->exp, *($4->str), $5->statement, $7->statement, *($10->str), $11->statement)); }
