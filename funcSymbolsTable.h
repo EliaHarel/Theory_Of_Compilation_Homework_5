@@ -45,32 +45,52 @@ public:
         }
 
         std::vector<Var> ordered_args;
-        for(auto& iter : args){
-            ordered_args.insert(ordered_args.begin(), iter);
-        }
+        for(auto& iter : args){ ordered_args.insert(ordered_args.begin(), iter); }
 
         funcs_vec.emplace_back(id, num_of_args, ordered_args, ret_type);
         curr_func++;
         funcs_map[id] = curr_func;
 
         //print func
-        string func_dec = "define " + TypeTollvmStr(ret_type.getType()) + " " + funcs_vec[curr_func].getllvmName() + "(";
-        for(int i=0; i< num_of_args; i++){
-            if(i>0){
+        string func_dec = "define " + TypeTollvmStr(ret_type.getType()) + " " +
+                          funcs_vec[curr_func].getllvmName() + "(";
+
+        for(int i = 0; i < num_of_args; i++){
+            if(i > 0){
                 func_dec += ", ";
             }
-            func_dec+= TypeTollvmStr(ordered_args[i].getVarType().getType());
+            func_dec += TypeTollvmStr(ordered_args[i].getVarType().getType());
         }
+
         func_dec += ") {";
+        std::string arg_num_str = to_string(num_of_args);
+
         CodeBuffer::instance().emit(func_dec);
         CodeBuffer::instance().emit("%locals = alloca [50 x i32]");
-        CodeBuffer::instance().emit("%args = alloca [" + to_string(num_of_args) + " x i32]");
-        for(int i=0; i< num_of_args; i++){
+        CodeBuffer::instance().emit("%args = alloca [" + arg_num_str + " x i32]");
+        CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x [256 x i1]*");
 
+
+        std::string line_args;
+        std::string line_store;
+        for(int i = 0; i < num_of_args; i++){
+            std::string new_var_name = Expression::gimmeANewCuteVar();
+            if(ordered_args[i].getVarType().getType() == Types_enum::SET_TYPE){
+                line_args = (new_var_name + " = getelementptr [" + arg_num_str + " x [256 x i1]*], [" +
+                             arg_num_str + " x [256 x i1]*]* %args_set, [256 x i1]* 0, [256 x i1]* " +
+                             to_string(i));
+                line_store = "store [256 x i1]* %" + to_string(i) + ", [256 x i1]** " + new_var_name;
+            }else{
+                line_args = new_var_name + " = getelementptr [" + arg_num_str + " x i32], [" + arg_num_str +
+                            " x i32]* %args, i32 0, i32 " + to_string(i);
+                line_store = "store i32 %" + to_string(i) + ", i32* " + new_var_name;
+            }
+            CodeBuffer::instance().emit(line_args);
+            CodeBuffer::instance().emit(line_store);
         }
 
-
     }
+
 
     void afterFunc(Types type){
         printRet(type);
@@ -91,9 +111,9 @@ public:
         CodeBuffer::instance().emit(func_end);
     }
 
-    static string defaultVal (Types_enum type){
+    static string defaultVal(Types_enum type){
         string val_str;
-        switch(type){
+        switch (type){
             case Types_enum::INT_TYPE :
                 val_str = "0";
                 break;
@@ -113,9 +133,9 @@ public:
 
     }
 
-    static string TypeTollvmStr (Types_enum type){
+    static string TypeTollvmStr(Types_enum type){
         string type_str;
-        switch(type){
+        switch (type){
             case Types_enum::INT_TYPE :
                 type_str = "i32";
                 break;

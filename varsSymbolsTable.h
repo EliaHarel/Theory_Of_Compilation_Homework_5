@@ -68,18 +68,18 @@ public:
         var_maps[id] = {curr_scope, index};
 
         string var_name = scopes[curr_scope].vars[index].getVarName();
-        switch(type.getType()){
-            case Types_enum:: INT_TYPE :
+        switch (type.getType()){
+            case Types_enum::INT_TYPE :
                 CodeBuffer::instance().emit(var_name = " add i32 0, 0");
                 break;
-            case Types_enum:: BYTE_TYPE :
+            case Types_enum::BYTE_TYPE :
                 CodeBuffer::instance().emit(var_name = " add i32 0, 0");
                 break;
-            case Types_enum:: BOOL_TYPE :
+            case Types_enum::BOOL_TYPE :
                 CodeBuffer::instance().emit(var_name = " add i1 0, 0");
                 break;
-            case Types_enum:: SET_TYPE :
-                CodeBuffer::instance().emit(var_name +" =  alloca [256 x i1]");
+            case Types_enum::SET_TYPE :
+                CodeBuffer::instance().emit(var_name + " =  alloca [256 x i1]");
 
                 // TODO: need to initialize
                 break;
@@ -99,18 +99,20 @@ public:
 
         string var_name = scopes[curr_scope].vars[index].getVarName();
 
-        switch(type.getType()){
-            case Types_enum:: INT_TYPE :
-                CodeBuffer::instance().emit(var_name = " add i32 " + exp.var_name + ", 0");
+        switch (type.getType()){
+            case Types_enum::INT_TYPE :
+                CodeBuffer::instance().emit(var_name + " = add i32 " + exp.var_name + ", 0");
                 break;
-            case Types_enum:: BYTE_TYPE :
-                CodeBuffer::instance().emit(var_name = " add i32 " + exp.var_name + ", 0");
+            case Types_enum::BYTE_TYPE :
+                CodeBuffer::instance().emit(var_name + " = add i32 " + exp.var_name + ", 0");
                 break;
-            case Types_enum:: BOOL_TYPE :
-                CodeBuffer::instance().emit(var_name = " add i1 " + exp.var_name + ", 0");
+            case Types_enum::BOOL_TYPE :
+                CodeBuffer::instance().emit(var_name + " = add i1 " + exp.var_name + ", 0");
                 break;
-            case Types_enum:: SET_TYPE :
-                CodeBuffer::instance().emit(var_name = " getelementptr [256 * i1], [256 * i1]* " + exp.var_name +  "i1 0, i1 0 ");
+            case Types_enum::SET_TYPE :
+                CodeBuffer::instance().emit(
+                        var_name + " = getelementptr [256 x i1], [256 x i1]* " + exp.var_name +
+                        ", i1 0, i1 0");
                 break;
             default:
                 break;
@@ -207,18 +209,20 @@ public:
 
         Var var = getVarSymbolTable(id);
         var.setVarName();
-        switch(type.getType()){
-            case Types_enum:: INT_TYPE :
+        switch (type.getType()){
+            case Types_enum::INT_TYPE :
                 CodeBuffer::instance().emit(var.getVarName() = " add i32 " + exp.var_name + ", 0");
                 break;
-            case Types_enum:: BYTE_TYPE :
+            case Types_enum::BYTE_TYPE :
                 CodeBuffer::instance().emit(var.getVarName() = " add i32 " + exp.var_name + ", 0 ");
                 break;
-            case Types_enum:: BOOL_TYPE :
+            case Types_enum::BOOL_TYPE :
                 CodeBuffer::instance().emit(var.getVarName() = " add i1 " + exp.var_name + ", 0 ");
                 break;
-            case Types_enum:: SET_TYPE :
-                CodeBuffer::instance().emit(var.getVarName() = " getelementptr [256 * i1], [256 * i1]* " + exp.var_name +  "i1 0, i1 0 ");
+            case Types_enum::SET_TYPE :
+                CodeBuffer::instance().emit(var.getVarName() =
+                                                    " getelementptr [256 * i1], [256 * i1]* " + exp.var_name +
+                                                    "i1 0, i1 0 ");
                 break;
             default:
                 break;
