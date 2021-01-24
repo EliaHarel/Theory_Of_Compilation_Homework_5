@@ -65,10 +65,12 @@ public:
         } else {
             index = scopes[curr_scope].addVar(id, type, curr_scope);
 
+            // TODO Maybe malloc here, if not, remember to malloc before passing a set as an argument to a function
+            // Conjecture: one cannot interfere with a caller function's stack when in the callee function.
             if (type.getType() == Types_enum::SET_TYPE) {
                 int offset = scopes[curr_scope].vars[index].getOffset();
                 Expression new_set(Types_enum::SET_TYPE);
-                CodeBuffer::instance().emit(new_set.var_name + +" = alloca [256 x i1]");
+                CodeBuffer::instance().emit(new_set.var_name + " = alloca [256 x i1]");
                 Expression::handleSet(new_set, Expression(), "init");
                 std::string ptr = Expression::gimmeANewCuteVar();
                 CodeBuffer::instance().emit(
@@ -124,8 +126,8 @@ public:
         assign(index, type, exp);
     }
 
-
-    void assign (int index,  const Types& type, const Expression& exp){
+    // TODO : Negative index for function arguments, goto arguments stack instead of the regular stack (also for sets).
+    void assign (int index, const Types& type, const Expression& exp){
         std::string ptr = Expression::gimmeANewCuteVar();
         switch (type.getType()) {
             case Types_enum::INT_TYPE :
@@ -277,13 +279,7 @@ public:
             case Types_enum::SET_TYPE:
             {
                 printGetPtrForSet(ptr, index);
-                Expression src_set (Types_enum::SET_TYPE);
-                CodeBuffer::instance().emit(src_set.var_name + " = load [256 x i1]*, [256 x i1]** " + ptr);
-                std::string malloc_ptr = Expression::gimmeANewCuteVar();
-                CodeBuffer::instance().emit(malloc_ptr + " =  call i8* @malloc(i64 32)");
-                CodeBuffer::instance().emit(new_var.var_name + " = bitcast i8* " + malloc_ptr + " to [256 x i1]*");
-                Expression::handleSet(src_set, new_var, "copy");
-                CodeBuffer::instance().emit("ret [256 x i1]* " + new_var.var_name);
+                CodeBuffer::instance().emit(new_var.var_name + " = load [256 x i1]*, [256 x i1]** " + ptr);
                 break;
 
             }

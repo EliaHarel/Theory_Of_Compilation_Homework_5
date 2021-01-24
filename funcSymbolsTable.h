@@ -129,8 +129,12 @@ public:
             case Types_enum::SET_TYPE:
             {
                 std::string ret_val = Expression::gimmeANewCuteVar();
+                CodeBuffer::instance().emit(ret_val + " =  call i8* @malloc(i64 32)");
+                Expression dest_set (Types_enum::SET_TYPE);
+                CodeBuffer::instance().emit(dest_set.var_name + " = bitcast i8* " + ret_val + " to [256 x i1]*");
 
-                CodeBuffer::instance().emit("ret " + TypeTollvmStr(exp.type.getType()) + " " + ret_val);
+                Expression::handleSet(exp, dest_set, "copy");
+                CodeBuffer::instance().emit("ret [256 x i1]* " + dest_set.var_name);
                 break;
             }
             default:
@@ -154,7 +158,7 @@ public:
                 val_str = "";
                 break;
             case Types_enum::SET_TYPE :
-                val_str ="null";
+                val_str = "null";
                 break;
             default:
                 break;
