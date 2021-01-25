@@ -32,7 +32,7 @@ public:
     }
 
     string getllvmName(){
-        return ID != "print" && ID != "printi" ? "@_" + ID : "@" + ID;
+        return ID != "print" && ID != "printi" && ID != "main" ? "@_" + ID : "@" + ID;
     }
 };
 

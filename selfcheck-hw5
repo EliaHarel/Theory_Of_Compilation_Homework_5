@@ -31,8 +31,10 @@ make &> /dev/null
 
 cp hw5 ${tmpdir}/
 
+if [[ ! -f "hw5-tests.zip" ]]; then
+  wget --no-check-certificate "$testsurl" &> /dev/null
+fi
 
-wget --no-check-certificate "$testsurl" &> /dev/null
 if [ ! -f $( basename "$testsurl" ) ]
 then
   echo "Unable to download tests!"

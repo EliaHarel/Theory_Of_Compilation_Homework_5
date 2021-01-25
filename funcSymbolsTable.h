@@ -81,6 +81,7 @@ public:
         CodeBuffer::instance().emit("call void @llvm.memset.p0i8.i64(i8* " + temp_ptr_2
                                     + ", i8 0, i64 1600 , i1 false)");
 
+/*
         temp_ptr_1 = Expression::gimmeANewCuteVar();
         CodeBuffer::instance().emit(temp_ptr_1 +
                                     " = getelementptr [50 x [256 x i1]*], [50 x [256 x i1]*]* %locals_set, [256 x i1]* 0, [256 x i1]* 0");
@@ -89,6 +90,7 @@ public:
                 temp_ptr_2 + " = bitcast [256 x i1]** " + temp_ptr_1 + " to i8*");
         CodeBuffer::instance().emit(
                 "call void @llvm.memset.p0i8.i64(i8* " + temp_ptr_2 + ", i8 0, i64 400 , i1 false)");
+*/
 
         CodeBuffer::instance().emit("%args = alloca [" + arg_num_str + " x i32]");
         CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x [256 x i1]*]");
@@ -303,9 +305,9 @@ public:
                     break;
                 }
                 case Types_enum::STRING_TYPE:{
-                    func_call += "i8* getelementptr [" + to_string(ordered_params[i].str_length) +
+                    func_call += "i8* getelementptr ([" + to_string(ordered_params[i].str_length) +
                                  " x i8], [" + to_string(ordered_params[i].str_length) + " x i8]* " +
-                                 ordered_params[i].var_name + ", i32 0, i32 0";
+                                 ordered_params[i].var_name + ", i32 0, i32 0)";
                 }
                 default:
                     break;
