@@ -13,5 +13,7 @@ std::string enumToString(Types type);
 
 Types setCheck(int, int, int);
 
+void printGlobalFuncs();
+
 
 #endif //PROJECT_GLOBALFUNCS_H

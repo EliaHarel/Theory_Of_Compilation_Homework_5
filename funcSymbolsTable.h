@@ -59,7 +59,7 @@ public:
             if (i > 0) {
                 func_dec += ", ";
             }
-            func_dec += TypeTollvmStr(ordered_args[i].getVarType().getType());
+            func_dec += TypeTollvmStr(ordered_args[i].getVarType().getType()) + "%" + to_string(i);
         }
 
         func_dec += ") {";
@@ -82,7 +82,12 @@ public:
                 CodeBuffer::instance().emit(new_var_name + " = getelementptr [" + arg_num_str + " x [256 x i1]*], [" +
                                             arg_num_str + " x [256 x i1]*]* %args_set, [256 x i1]* 0, [256 x i1]* " +
                                             to_string(i));
-                CodeBuffer::instance().emit("store [256 x i1]* %" + to_string(i) + ", [256 x i1]** " + new_var_name);
+                std::string set_alloc = Expression::gimmeANewCuteVar();
+                CodeBuffer::instance().emit(set_alloc + " = alloca [256 x i1]");
+                CodeBuffer::instance().emit("store [256 x i1]* " + set_alloc + ", [256 x i1]** " + new_var_name);
+
+                CodeBuffer::instance().emit("store i256 %" + to_string(i) + ", [256 x i1]* " + set_alloc);
+
             } else if (ordered_args[i].getVarType() == Types_enum::BOOL_TYPE) {
                 CodeBuffer::instance().emit(
                         new_var_name + " = getelementptr [" + arg_num_str + " x i32], [" + arg_num_str +
@@ -128,14 +133,19 @@ public:
             }
             case Types_enum::SET_TYPE:
             {
-                std::string ret_val = Expression::gimmeANewCuteVar();
+                std::string loaded_arr = Expression::gimmeANewCuteVar();
+                CodeBuffer::instance().emit(loaded_arr + " = load i256, i256* " + exp.var_name);
+                CodeBuffer::instance().emit("ret i256 " + loaded_arr);
+             /*   std::string ret_val = Expression::gimmeANewCuteVar();
                 CodeBuffer::instance().emit(ret_val + " =  call i8* @malloc(i64 32)");
                 Expression dest_set (Types_enum::SET_TYPE);
                 CodeBuffer::instance().emit(dest_set.var_name + " = bitcast i8* " + ret_val + " to [256 x i1]*");
 
                 Expression::handleSet(exp, dest_set, "copy");
                 CodeBuffer::instance().emit("ret [256 x i1]* " + dest_set.var_name);
-                break;
+                break;*/
+
+
             }
             default:
                 break;
@@ -158,7 +168,7 @@ public:
                 val_str = "";
                 break;
             case Types_enum::SET_TYPE :
-                val_str = "null";
+                val_str = "0";
                 break;
             default:
                 break;
@@ -181,7 +191,7 @@ public:
                 type_str = "void";
                 break;
             case Types_enum::SET_TYPE :
-                type_str = "[256 x i1]*";
+                type_str = "i256";
                 break;
             default:
                 break;
@@ -189,7 +199,7 @@ public:
         return type_str;
     }
 
-    Types checkFunc(const std::string &id, std::vector<Types> types_vec) {
+    Expression callFunc(const std::string &id, std::vector<Expression> exps_vec) {
         if (!isDefined(id)) {
             errorUndefFunc(yylineno, id);
             exit(1);
@@ -202,16 +212,16 @@ public:
             args_types.emplace_back(enumToString(arg.getVarType()));
         }
 
-        if (args.size() != types_vec.size()) {
+        if (args.size() != exps_vec.size()) {
             errorPrototypeMismatch(yylineno, id, args_types);
             exit(1);
         }
 
-        int back_index = types_vec.size() - 1;
+        int back_index = exps_vec.size() - 1;
         for (int i = 0; i < args.size(); i++) {
-            if (args[i].getVarType() != types_vec[back_index]) {
+            if (args[i].getVarType() != exps_vec[back_index].type) {
                 if (!(args[i].getVarType() == Types_enum::INT_TYPE &&
-                      types_vec[back_index] == Types_enum::BYTE_TYPE)) {
+                        exps_vec[back_index].type == Types_enum::BYTE_TYPE)) {
                     errorPrototypeMismatch(yylineno, id, args_types);
                     exit(1);
                 }
@@ -219,7 +229,62 @@ public:
             back_index--;
         }
 
-        return funcs_vec[funcs_map[id]].getRetType();
+        return printCallingFunc(id, exps_vec);
+    }
+
+    Expression printCallingFunc ( const std::string& id, const std::vector<Expression>& exps_vec){
+        std::vector<Expression> ordered_params;
+        for (int i=exps_vec.size()-1 ; i>=0 ; i--) {
+            ordered_params.emplace_back(exps_vec[i]);
+        }
+
+        Function func = funcs_vec[funcs_map[id]];
+        Expression ret_exp (func.getRetType());
+        std::string func_call = ret_exp.var_name + " = call "+ TypeTollvmStr(func.getRetType().getType()) + " " + func.getllvmName() + "( ";
+        for(int i=0; i<ordered_params.size(); i++){
+            if(i>0){
+                func_call += ", ";
+            }
+            switch(ordered_params[i].type.getType()){
+                case Types_enum::INT_TYPE:
+                case Types_enum::BYTE_TYPE:
+                    func_call += "i32 "+ ordered_params[i].var_name;
+                    break;
+                case Types_enum::BOOL_TYPE:
+                {
+                    std::string true_list_label = CodeBuffer::instance().genLabel();
+                    int true_loc = CodeBuffer::instance().emit("br label @");
+                    std::string false_list_label = CodeBuffer::instance().genLabel();
+                    int false_loc = CodeBuffer::instance().emit("br label @");
+
+                    CodeBuffer::instance().bpatch(ordered_params[i].true_list, true_list_label);
+                    CodeBuffer::instance().bpatch(ordered_params[i].false_list, false_list_label);
+
+                    std::string new_var = Expression::gimmeANewCuteVar();
+                    std::string exit = CodeBuffer::instance().genLabel();
+                    CodeBuffer::instance().emit(new_var + " = phi i1 [ 1, " + true_list_label + " ], [ 0, " + false_list_label + " ]");
+
+                    CodeBuffer::instance().bpatch(CodeBuffer::makelist({true_loc, FIRST}), exit);
+                    CodeBuffer::instance().bpatch(CodeBuffer::makelist({false_loc, FIRST}), exit);
+
+                    func_call+="i1 "+ new_var;
+                    break;
+                }
+                case Types_enum::SET_TYPE:
+                {
+                    std::string loaded_arr = Expression::gimmeANewCuteVar();
+                    CodeBuffer::instance().emit(loaded_arr + " = load i256, i256* " + ordered_params[i].var_name);
+                    func_call += "i256 "+ loaded_arr;
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+
+        func_call += ")";
+        CodeBuffer::instance().emit(func_call);
+        return ret_exp;
     }
 
     bool isMain() {

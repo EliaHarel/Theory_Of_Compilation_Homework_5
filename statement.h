@@ -85,14 +85,14 @@ public:
     }
 
     static Statement_c breakComm(){
-        int loc =CodeBuffer::instance().emit("br label @");
+        int loc = CodeBuffer::instance().emit("br label @");
         Statement_c new_statement;
         new_statement.break_list.emplace_back(pair<int, BranchLabelIndex>(loc, FIRST));
         return new_statement;
     }
 
     static Statement_c continueComm(){
-        int loc =CodeBuffer::instance().emit("br label @");
+        int loc = CodeBuffer::instance().emit("br label @");
         Statement_c new_statement;
         new_statement.continue_list.emplace_back(pair<int, BranchLabelIndex>(loc, FIRST));
         return new_statement;

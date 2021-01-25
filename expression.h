@@ -421,6 +421,30 @@ public:
         return new_var;
     }
 
+    Expression call(){
+        Expression new_var(type);
+        switch(type.getType()){
+            case Types_enum::INT_TYPE:
+            case Types_enum::BYTE_TYPE:
+                CodeBuffer::instance().emit(new_var.var_name + " = add i32 0, " + var_name);
+                break;
+            case Types_enum::BOOL_TYPE:
+            {
+                int loc = CodeBuffer::instance().emit("br i1 " + var_name + " label @, label @");
+                new_var.true_list = CodeBuffer::makelist({loc, FIRST});
+                new_var.false_list = CodeBuffer::makelist({loc,SECOND});
+                break;
+            }
+            case Types_enum::SET_TYPE:
+                CodeBuffer::instance().emit(new_var.var_name + " alloca [256 x i1]");
+                CodeBuffer::instance().emit("store i256 "+ var_name + " [256 x i1]*" + new_var.var_name);
+                break;
+            default:
+                break;
+        }
+        return new_var;
+    }
+
     static std::string gimmeANewCuteVar(){
         return "%newCuteVar_" + std::to_string(new_var_counter++);
     }

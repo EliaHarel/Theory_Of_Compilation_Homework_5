@@ -4,6 +4,7 @@
 
 #include "globalFuncs.h"
 #include "hw3_output.hpp"
+#include "bp.hpp"
 
 std::string enumToString(Types type){
     switch (type.getType()){
@@ -32,5 +33,25 @@ Types setCheck(int lineno, int num1, int num2){
     }
     return Types(num1, num2);
 }
+//TODO:: print to global
+/*
+void casti256toarr(){
+     CodeBuffer::instance().emitGlobal("define [256 x i1] @castToArr(i256 %0) {");
+
+    CodeBuffer::instance().emitGlobal("}");
+}
+
+void castArrToi256(){
+
+}
+*/
+
+void printGlobalFuncs(){
+
+}
+
+
+
+
 
 

@@ -162,21 +162,29 @@ public:
 
     void printGetPtr ( const string& ptr, int index){
         int offset = scopes[curr_scope].vars[index].getOffset();
-        CodeBuffer::instance().emit(
-                ptr + " = getelementptr [50 x i32] , [50 x i32]* %locals, i32 0, i32 " + to_string(offset));
+        if(offset >= 0){
+            CodeBuffer::instance().emit(
+                    ptr + " = getelementptr [50 x i32] , [50 x i32]* %locals, i32 0, i32 " + to_string(offset));
+        }else{
+            offset = abs(offset);
+            CodeBuffer::instance().emit(
+                    ptr + " = getelementptr [50 x i32] , [50 x i32]* %args, i32 0, i32 " + to_string(offset));
+
+        }
     }
 
     void printGetPtrForSet ( const string& ptr, int index){
         int offset = scopes[curr_scope].vars[index].getOffset();
-        CodeBuffer::instance().emit(ptr +
-                                    " = getelementptr [50 x [256 x i1]*] , [50 x [256 x i1]*]* %locals_set, [256 x i1]* 0, [256 x i1]* " +
-                                    to_string(offset));
+        if(offset >= 0){
+            CodeBuffer::instance().emit(ptr +
+                                        " = getelementptr [50 x [256 x i1]*] , [50 x [256 x i1]*]* %locals_set, [256 x i1]* 0, [256 x i1]* " +
+                                        to_string(offset));
+        }else{
+            CodeBuffer::instance().emit(ptr +
+                                        " = getelementptr [50 x [256 x i1]*] , [50 x [256 x i1]*]* %args_set, [256 x i1]* 0, [256 x i1]* " +
+                                        to_string(offset));
+        }
     }
-
-
-
-
-
 
     void addScopeFromFunc(const std::string &id, std::vector<Var> &args, const Types &ret_type) {
         //assuming first scope

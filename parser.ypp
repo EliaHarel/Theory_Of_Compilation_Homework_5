@@ -107,7 +107,9 @@ Program :      Global Funcs CGlobal														{}
 Global:        /*epsilon*/	                                                {FuncSymbolsTable_t = new FuncSymbolsTable();
 																										VarsSymbolsTable_t = new VarsSymbolsTable();
 																										VarsSymbolsTable_t->setFuncsTable(FuncSymbolsTable_t);
-																										VarsSymbolsTable_t->addFirstScope();}
+																										VarsSymbolsTable_t->addFirstScope();
+																										printGlobalFuncs();
+																										}
 
 CGlobal:       /*epsilon*/	                                                {VarsSymbolsTable_t->deleteScope(true);
 																										delete VarsSymbolsTable_t;
@@ -136,10 +138,10 @@ FormalsList : 	FormalDecl												              	{$$->varsVec = $1->varsVec;}
 
 FormalDecl : 	Type ID													               {$$->varsVec = std::vector<Var>(1, Var(*($2->str), $1->type));}
 
-Statements :    Statement											              	   {(*$$)=(*$1);}
+Statements :    Statement											              	   {$$ = $1;}
                   | Statements M Statement							            {$$ = new utype(Statement_c::combineStatements($1->statement, *($2->str), $3->statement));}
 
-Statement : 	LBRACE OScope Statements CScope RBRACE							   {(*$$) = (*$3);}
+Statement : 	LBRACE OScope Statements CScope RBRACE							   {$$ = $3;}
                   | Type ID SC										              	{VarsSymbolsTable_t->addVar(*($2->str), $1->type);
                                                                               $$ = new utype();}
                   | Type ID ASSIGN Exp SC							              	{$4->exp.typeCheck($1->type);
@@ -165,18 +167,20 @@ Statement : 	LBRACE OScope Statements CScope RBRACE							   {(*$$) = (*$3);}
 OWhile:         /*epsilon*/                                                {VarsSymbolsTable_t->setWhile();}
 
 IfStart:          IF LPAREN Exp                                            {Statement_c::checkExp($3->exp);
-																										(*$$) = (*$3);}
+																										$$ = $3;}
 
 WhileStart:       WHILE LPAREN M Exp                                       {Statement_c::checkExp($4->exp);
-																										(*$$) = (*$4);
+																										$$ = $4;
 																										*($$->str) = *($3->str);}
 																										
-Call :         ID LPAREN ExpList RPAREN									         {$$->type = FuncSymbolsTable_t->checkFunc(*($1->str), $3->typesVec);}
-                  | ID LPAREN RPAREN							      				{$$->type = FuncSymbolsTable_t->checkFunc(*($1->str), std::vector<Types>());}
+Call :         ID LPAREN ExpList RPAREN									         {Expression temp_exp = FuncSymbolsTable_t->callFunc(*($1->str), $3->expsVec);
+                                                                              $$ = new utype(temp_exp);}
+                  | ID LPAREN RPAREN							      				{Expression temp_exp = FuncSymbolsTable_t->callFunc(*($1->str), std::vector<Expression>());
+                                                                              $$ = new utype(temp_exp);}
 
-ExpList :         Exp														         	{$$->typesVec = std::vector<Types>(1, $1->exp.type);}
-                  | Exp COMMA ExpList							      				{$3->typesVec.push_back($1->exp.type);
-																										$$->typesVec = $3->typesVec;}
+ExpList :         Exp														         	{$$->expsVec = std::vector<Expression>(1, $1->exp);}
+                  | Exp COMMA ExpList							      				{$3->expsVec.push_back($1->exp);
+																										$$->expsVec = $3->expsVec;}
 
 Type :         INT															            {$$ = new utype(Types_enum::INT_TYPE);}
                   | BYTE													         	{$$ = new utype(Types_enum::BYTE_TYPE);}
@@ -194,7 +198,8 @@ Exp :          LPAREN Exp RPAREN								            			{$$ = new utype($2->exp);
                                                                               $$ = new utype(temp_exp);}
                   | ID											            			{Expression temp_exp = VarsSymbolsTable_t->getExp(*($1->str));
                                                                               $$ = new utype(temp_exp);}
-                  | Call										         				{$$ = new utype($1->type);}
+                  | Call										         				{Expression temp_exp = $1->exp.call();
+                                                                              $$ = new utype(temp_exp);}
                   | NUM											             			{Expression temp_exp = Expression::printNum($1->num, Types_enum::INT_TYPE);
                                                                               $$ = new utype(temp_exp);}
                   | NUM B										         				{Expression temp_exp = Expression::printNum($1->num, Types_enum::BYTE_TYPE);

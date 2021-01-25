@@ -26,40 +26,45 @@ public:
     Statement_c statement;
     std::vector<Var> varsVec;
     std::vector<Types> typesVec;
+    std::vector<Expression> expsVec;
 
     utype() : num(-1), str(nullptr), exp(Expression()), type(Types()), var(Var()),
-              statement(Statement_c()), varsVec(std::vector<Var>()), typesVec(std::vector<Types>()){};
+              statement(Statement_c()), varsVec(std::vector<Var>()), typesVec(std::vector<Types>()), expsVec(std::vector<Expression>()){};
 
     utype(int num) : num(num), str(nullptr), exp(Expression()), type(Types()), var(Var()),
-                     statement(Statement_c()), varsVec(std::vector<Var>()), typesVec(std::vector<Types>()){};
+                     statement(Statement_c()), varsVec(std::vector<Var>()), typesVec(std::vector<Types>()), expsVec(std::vector<Expression>()){};
 
     utype(std::string rhs_str) : num(-1), str(new std::string(rhs_str)), exp(Expression()),
                                  type(Types()), var(Var()), statement(Statement_c()),
-                                 varsVec(std::vector<Var>()), typesVec(std::vector<Types>()){};
+                                 varsVec(std::vector<Var>()), typesVec(std::vector<Types>()), expsVec(std::vector<Expression>()){};
 
     utype(Expression& rhs) : num(-1), str(nullptr), exp(rhs), type(Types()), var(Var()),
                              statement(Statement_c()), varsVec(std::vector<Var>()),
-                             typesVec(std::vector<Types>()){};
+                             typesVec(std::vector<Types>()), expsVec(std::vector<Expression>()){};
 
-    utype(Types type) : num(-1), str(nullptr), exp(Expression()), type(type), var(Var()),
+    utype(const Types& type) : num(-1), str(nullptr), exp(Expression()), type(type), var(Var()),
                         statement(Statement_c()), varsVec(std::vector<Var>()),
-                        typesVec(std::vector<Types>()){};
+                        typesVec(std::vector<Types>()), expsVec(std::vector<Expression>()){};
 
     utype(Types_enum type) : num(-1), str(nullptr), exp(Expression()), type(type), var(Var()),
                              statement(Statement_c()), varsVec(std::vector<Var>()),
-                             typesVec(std::vector<Types>()){};
+                             typesVec(std::vector<Types>()), expsVec(std::vector<Expression>()) {};
 
     utype(const std::vector<Var>& varsVec) : num(-1), str(nullptr), exp(Expression()), type(Types()),
                                              var(Var()), statement(Statement_c()), varsVec(varsVec),
-                                             typesVec(std::vector<Types>()){};
+                                             typesVec(std::vector<Types>()), expsVec(std::vector<Expression>()){};
 
     utype(const std::vector<Types>& typesVec) : num(-1), str(nullptr), exp(Expression()), type(Types()),
                                                 var(Var()), statement(Statement_c()),
-                                                varsVec(std::vector<Var>()), typesVec(typesVec){};
+                                                varsVec(std::vector<Var>()), typesVec(typesVec),expsVec(std::vector<Expression>()){} ;
 
-    utype(const Statement_c statement) : num(-1), str(nullptr), exp(Expression()), type(Types()),
+    utype(const Statement_c& statement) : num(-1), str(nullptr), exp(Expression()), type(Types()),
                                           var(Var()), statement(statement), varsVec(std::vector<Var>()),
-                                          typesVec(std::vector<Types>()){};
+                                          typesVec(std::vector<Types>()), expsVec(std::vector<Expression>()){};
+
+    utype(const std::vector<Expression>& expressVec) : num(-1), str(nullptr), exp(Expression()), type(Types()),
+                                                var(Var()), statement(Statement_c()),
+                                                varsVec(std::vector<Var>()), typesVec(std::vector<Types>()), expsVec(expressVec){};
 
 
     ~utype(){
@@ -68,7 +73,7 @@ public:
 
     utype(const utype& rhs) : num(-1), str(new std::string(*(rhs.str))), exp(rhs.exp), type(rhs.type),
                               statement(rhs.statement), var(rhs.var), varsVec(rhs.varsVec),
-                              typesVec(rhs.typesVec){};
+                              typesVec(rhs.typesVec), expsVec(rhs.expsVec){};
 
     utype& operator=(const utype& rhs){
         if(this == &rhs){ return *this; }
@@ -78,6 +83,7 @@ public:
         type = rhs.type;
         var = rhs.var;
         statement = rhs.statement;
+        expsVec = rhs.expsVec;
         return *this;
     }
 
