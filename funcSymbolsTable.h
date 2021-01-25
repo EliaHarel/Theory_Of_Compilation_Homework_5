@@ -99,8 +99,8 @@ public:
                         new_var_name + " = getelementptr [" + arg_num_str + " x i32], [" + arg_num_str +
                         " x i32]* %args, i32 0, i32 " + to_string(i));
                 std::string bool_name = Expression::gimmeANewCuteVar();
-                CodeBuffer::instance().emit(bool_name + " = zext i1 %" + to_string(i) + "  to i32");
-                CodeBuffer::instance().emit("store i32 %" + to_string(i) + ", i32* " + bool_name);
+                CodeBuffer::instance().emit(bool_name + " = zext i1 %" + to_string(i) + " to i32");
+                CodeBuffer::instance().emit("store i32 %" + bool_name + ", i32* " + new_var_name);
             }else{
                 CodeBuffer::instance().emit(
                         new_var_name + " = getelementptr [" + arg_num_str + " x i32], [" + arg_num_str +
