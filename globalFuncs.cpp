@@ -67,8 +67,8 @@ void printGlobalFuncs(){
     CodeBuffer::instance().emitGlobal(R"(@.str_plus = internal constant [31 x i8] c"Error out of set range. Op: +\0A\00")");
     CodeBuffer::instance().emitGlobal(R"(@.str_minus = internal constant [31 x i8] c"Error out of set range. Op: -\0A\00")");
     CodeBuffer::instance().emitGlobal(R"(@.str_in = internal constant [32 x i8] c"Error out of set range. Op: in\0A\00")");
-    CodeBuffer::instance().emitGlobal("declare void @llvm.memset.p0i8.i64(i8* , i8, i64, i1)");
-    CodeBuffer::instance().emitGlobal("declare i8* @memset(i8*, i32, i32)");
+//    CodeBuffer::instance().emitGlobal("declare void @llvm.memset.p0i8.i64(i8* , i8, i64, i1)");
+//    CodeBuffer::instance().emitGlobal("declare i8* @memset(i8*, i32, i32)");
 
 }
 

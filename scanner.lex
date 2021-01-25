@@ -62,7 +62,7 @@ in                                  return RELOP_IN;
 													yylval = new utype(temp);
 												 	return STRING;}
 \n												{
-													CodeBuffer::instance().code_line_debugging_only();
+//													CodeBuffer::instance().code_line_debugging_only();
 													}
 \/\/[^\r\n]*[\r|\n|\r\n]?           ;
 [ \t\n\r]+                          ;

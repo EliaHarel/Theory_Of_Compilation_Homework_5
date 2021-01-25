@@ -65,18 +65,22 @@ public:
         }else{
             index = scopes[curr_scope].addVar(id, type, curr_scope);
 
+            int offset = scopes[curr_scope].vars[index].getOffset();
+            std::string ptr = Expression::gimmeANewCuteVar();
+
             // TODO Maybe malloc here, if not, remember to malloc before passing a set as an argument to a function
             // Conjecture: one cannot interfere with a caller function's stack when in the callee function.
             if(type.getType() == Types_enum::SET_TYPE){
-                int offset = scopes[curr_scope].vars[index].getOffset();
                 Expression new_set(Types_enum::SET_TYPE);
                 CodeBuffer::instance().emit(new_set.var_name + " = alloca [256 x i1]");
                 Expression::handleSet(new_set, Expression(), "init");
-                std::string ptr = Expression::gimmeANewCuteVar();
                 CodeBuffer::instance().emit(
                         ptr + " = getelementptr [256 x i1]* , [256 x i1]** %locals_set, i1 0, i1 " +
                         to_string(offset));
                 CodeBuffer::instance().emit("store [256 x i1] " + new_set.var_name + ", [256 x i1]* " + ptr);
+            }else{
+                CodeBuffer::instance().emit(ptr + " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + to_string(offset));
+                CodeBuffer::instance().emit("store i32 0, i32* " + ptr);
             }
         }
         var_maps[id] = {curr_scope, index};

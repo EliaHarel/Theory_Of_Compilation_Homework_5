@@ -71,7 +71,7 @@ public:
         CodeBuffer::instance().emit("%locals = alloca [50 x i32]");
         CodeBuffer::instance().emit("%locals_set = alloca [50 x [256 x i1]*]");
         //TODO: check numbers
-        std::string temp_ptr_1 = Expression::gimmeANewCuteVar();
+/*        std::string temp_ptr_1 = Expression::gimmeANewCuteVar();
 
         CodeBuffer::instance().emit(
                 temp_ptr_1 + " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 0");
@@ -81,7 +81,7 @@ public:
         CodeBuffer::instance().emit("call void @llvm.memset.p0i8.i64(i8* " + temp_ptr_2
                                     + ", i8 0, i64 1600 , i1 false)");
 
-/*
+
         temp_ptr_1 = Expression::gimmeANewCuteVar();
         CodeBuffer::instance().emit(temp_ptr_1 +
                                     " = getelementptr [50 x [256 x i1]*], [50 x [256 x i1]*]* %locals_set, [256 x i1]* 0, [256 x i1]* 0");
