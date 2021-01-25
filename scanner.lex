@@ -61,6 +61,9 @@ in                                  return RELOP_IN;
 													temp = temp.substr(1, temp.size()-2);
 													yylval = new utype(temp);
 												 	return STRING;}
+\n												{
+													CodeBuffer::instance().code_line_debugging_only();
+													}
 \/\/[^\r\n]*[\r|\n|\r\n]?           ;
 [ \t\n\r]+                          ;
 .                                   {output::errorLex(yylineno); exit(1);};

@@ -13,7 +13,7 @@ FuncSymbolsTable& FuncSymbolsTable::getSymbolFunc(){
 }
 */
 
-bool FuncSymbolsTable::isValidName(const string& id, void* VarsSymbolsTable_t){
+bool FuncSymbolsTable::isValidName(const std::string& id, void* VarsSymbolsTable_t){
     if(isDefined(id)){
         return false;
     }

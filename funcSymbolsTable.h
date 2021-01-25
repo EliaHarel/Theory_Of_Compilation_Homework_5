@@ -53,7 +53,7 @@ public:
 
         //print func
         if(id == "print" || id == "printi") return;
-        
+
         std::string func_dec = "define " + TypeTollvmStr(ret_type.getType()) + " " +
                                funcs_vec[curr_func].getllvmName() + "(";
 
@@ -71,14 +71,27 @@ public:
         CodeBuffer::instance().emit("%locals = alloca [50 x i32]");
         CodeBuffer::instance().emit("%locals_set = alloca [50 x [256 x i1]*]");
         //TODO: check numbers
+        std::string temp_ptr_1 = Expression::gimmeANewCuteVar();
+
         CodeBuffer::instance().emit(
-                "call void @llvm.memset.p0i8.i64(i8* @locals, i8 0, i64 1600 , i1 false)");
+                temp_ptr_1 + " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 0");
+        std::string temp_ptr_2 = Expression::gimmeANewCuteVar();
         CodeBuffer::instance().emit(
-                "call void @llvm.memset.p0i8.i64(i8* @locals_set, i8 0, i64 400 , i1 false)");
+                temp_ptr_2 + " = bitcast i32* " + temp_ptr_1 + " to i8*");
+        CodeBuffer::instance().emit("call void @llvm.memset.p0i8.i64(i8* " + temp_ptr_2
+                                    + ", i8 0, i64 1600 , i1 false)");
+
+        temp_ptr_1 = Expression::gimmeANewCuteVar();
+        CodeBuffer::instance().emit(temp_ptr_1 +
+                                    " = getelementptr [50 x [256 x i1]*], [50 x [256 x i1]*]* %locals_set, [256 x i1]* 0, [256 x i1]* 0");
+        temp_ptr_2 = Expression::gimmeANewCuteVar();
+        CodeBuffer::instance().emit(
+                temp_ptr_2 + " = bitcast [256 x i1]** " + temp_ptr_1 + " to i8*");
+        CodeBuffer::instance().emit(
+                "call void @llvm.memset.p0i8.i64(i8* " + temp_ptr_2 + ", i8 0, i64 400 , i1 false)");
 
         CodeBuffer::instance().emit("%args = alloca [" + arg_num_str + " x i32]");
         CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x [256 x i1]*]");
-
 
         for(int i = 0; i < num_of_args; i++){
             std::string new_var_name = Expression::gimmeANewCuteVar();
@@ -100,7 +113,7 @@ public:
                         " x i32]* %args, i32 0, i32 " + to_string(i));
                 std::string bool_name = Expression::gimmeANewCuteVar();
                 CodeBuffer::instance().emit(bool_name + " = zext i1 %" + to_string(i) + " to i32");
-                CodeBuffer::instance().emit("store i32 %" + bool_name + ", i32* " + new_var_name);
+                CodeBuffer::instance().emit("store i32 " + bool_name + ", i32* " + new_var_name);
             }else{
                 CodeBuffer::instance().emit(
                         new_var_name + " = getelementptr [" + arg_num_str + " x i32], [" + arg_num_str +
@@ -245,9 +258,13 @@ public:
 
         Function func = funcs_vec[funcs_map[id]];
         Expression ret_exp(func.getRetType());
-        std::string func_call =
-                ret_exp.var_name + " = call " + TypeTollvmStr(func.getRetType().getType()) + " " +
-                func.getllvmName() + "( ";
+
+        std::string func_call;
+        if(func.getRetType() != Types_enum::VOID_TYPE){
+            func_call += ret_exp.var_name + " = ";
+        }
+
+        func_call += "call " + TypeTollvmStr(func.getRetType().getType()) + " " + func.getllvmName() + "( ";
         for(int i = 0; i < ordered_params.size(); i++){
             if(i > 0){
                 func_call += ", ";
@@ -269,7 +286,7 @@ public:
                     std::string new_var = Expression::gimmeANewCuteVar();
                     std::string exit = CodeBuffer::instance().genLabel();
                     CodeBuffer::instance().emit(
-                            new_var + " = phi i1 [ 1, " + true_list_label + " ], [ 0, " + false_list_label +
+                            new_var + " = phi i1 [ 1, %" + true_list_label + " ], [ 0, %" + false_list_label +
                             " ]");
 
                     CodeBuffer::instance().bpatch(CodeBuffer::makelist({true_loc, FIRST}), exit);
@@ -280,10 +297,15 @@ public:
                 }
                 case Types_enum::SET_TYPE:{
                     std::string loaded_arr = Expression::gimmeANewCuteVar();
-                    CodeBuffer::instance().emit(
-                            loaded_arr + " = load i256, i256* " + ordered_params[i].var_name);
+                    CodeBuffer::instance().emit(loaded_arr + " = load i256, i256* "
+                                                + ordered_params[i].var_name);
                     func_call += "i256 " + loaded_arr;
                     break;
+                }
+                case Types_enum::STRING_TYPE:{
+                    func_call += "i8* getelementptr [" + to_string(ordered_params[i].str_length) +
+                                 " x i8], [" + to_string(ordered_params[i].str_length) + " x i8]* " +
+                                 ordered_params[i].var_name + ", i32 0, i32 0";
                 }
                 default:
                     break;

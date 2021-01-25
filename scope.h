@@ -14,6 +14,7 @@ class Scope {
     bool isInWhile;
     bool isInFunc;
     Types type;
+    int num_of_args = 0;
 
 public:
     std::vector<Var> vars;
@@ -34,6 +35,7 @@ public:
     int addFuncVar(const std::string& id, const Types& var_type, int scope){
         vars.emplace_back(id, var_type, scope, offset);
         offset--;
+        num_of_args++;
         int curr_index = index;
         index++;
         return curr_index;
@@ -66,6 +68,8 @@ public:
     Types getScopeType(){
         return type;
     }
+
+    int getNumArgs(){ return num_of_args; };
 };
 
 #endif //HOMEWORK_3_SCOPE_H

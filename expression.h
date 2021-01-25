@@ -26,10 +26,11 @@ public:
     vector<pair<int, BranchLabelIndex>> false_list = vector<pair<int, BranchLabelIndex>>();
     Types type;
     std::string var_name;
+    int str_length = 0;
 
     Expression() : type(Types_enum::UNDEFINED_TYPE), var_name(gimmeANewCuteVar()){};
 
-    Expression(const Expression& rhs) : type(rhs.type), var_name(rhs.var_name),
+    Expression(const Expression& rhs) : type(rhs.type), var_name(rhs.var_name), str_length(rhs.str_length),
                                         true_list(rhs.true_list), false_list(rhs.false_list){};
 
     explicit Expression(const Types& t) : type(t), var_name(gimmeANewCuteVar()){};
@@ -49,6 +50,7 @@ public:
         true_list = rhs.true_list;
         false_list = rhs.false_list;
         var_name = gimmeANewCuteVar();
+        str_length = rhs.str_length;
         return *this;
     }
 
@@ -209,7 +211,7 @@ public:
 
     static std::string handleSet(const Expression& src, const Expression& dst, const std::string& func){
 
-        std::string init = CodeBuffer::instance().genLabel();
+        std::string init_label = CodeBuffer::instance().genLabel();
         std::string sum;
         if(func == "sum"){
             sum = gimmeANewCuteVar();
@@ -242,7 +244,7 @@ public:
                     "getelementptr [256 * i1], [256 * i1]* " + dst.var_name + " i1 0, i1 " + counter;
             CodeBuffer::instance().emit(dst_var + " = " + src_comm);
             CodeBuffer::instance().emit("store i1 " + val + ", i1* " + dst_var);
-        }else if(func == "init"){
+        }else if(func == "init_label"){
             CodeBuffer::instance().emit("store i1 0 , i1* " + src_var);
         }else{ // func == "sum"
             std::string temp_sum = gimmeANewCuteVar();
@@ -262,7 +264,7 @@ public:
 
         std::string phi = CodeBuffer::instance().genLabel();
         std::string phi_comm =
-                counter + " = phi i32 [ 0, " + init + " ], [ " + index + ", " + false_label + " ]";
+                counter + " = phi i32 [ 0, %" + init_label + " ], [ " + index + ", %" + false_label + " ]";
 
         int to_loop = CodeBuffer::instance().emit("br label @");
         std::string after = CodeBuffer::instance().genLabel();
@@ -405,7 +407,7 @@ public:
         return new_var;
     }
 
-    static Expression call(const Types& type){ return Expression(type); }
+//    static Expression call(const Types& type){ return Expression(type); }
 
     void typeCheck(const Types& t){
         if(t.getType() != type.getType() && !(type == Types_enum::BYTE_TYPE && t == Types_enum::INT_TYPE)){
@@ -432,7 +434,7 @@ public:
                 CodeBuffer::instance().emit(new_var.var_name + " = add i32 0, " + var_name);
                 break;
             case Types_enum::BOOL_TYPE:{
-                int loc = CodeBuffer::instance().emit("br i1 " + var_name + " label @, label @");
+                int loc = CodeBuffer::instance().emit("br i1 " + var_name + ", label @, label @");
                 new_var.true_list = CodeBuffer::makelist({loc, FIRST});
                 new_var.false_list = CodeBuffer::makelist({loc, SECOND});
                 break;
@@ -454,9 +456,11 @@ public:
     static Expression handlingString(std::string str){
         Expression new_var(Types_enum::STRING_TYPE);
         new_var.var_name[0] = '@';
-        new_var.var_name[1] = '.';
+        new_var.str_length = str.size() + 2;
+
         CodeBuffer::instance().emitGlobal(
-                new_var.var_name + " = internal constant [" + to_string(str.length() + 2) + " x i8] c\"" + str +
+                new_var.var_name + " = internal constant [" + to_string(str.length() + 2) + " x i8] c\"" +
+                str +
                 R"(\0A\00")" + '\n');
         return new_var;
     }

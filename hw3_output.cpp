@@ -8,7 +8,7 @@ void output::endScope(){
     cout << "---end scope---" << endl;
 }
 
-void output::printID(const string& id, int offset, const string& type){
+void output::printID(const std::string& id, int offset, const string& type){
     cout << id << " " << type << " " << offset << endl;
 }
 

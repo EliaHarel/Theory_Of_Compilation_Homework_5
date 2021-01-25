@@ -5,16 +5,18 @@
 
 using namespace std;
 
-bool replace(string& str, const string& from, const string& to, const BranchLabelIndex index);
+bool replace(std::string& str, const std::string& from, const std::string& to, const BranchLabelIndex index);
 
 CodeBuffer::CodeBuffer() : buffer(), globalDefs(){}
+
+int CodeBuffer::count = 1;
 
 CodeBuffer& CodeBuffer::instance(){
     static CodeBuffer inst;//only instance
     return inst;
 }
 
-string CodeBuffer::genLabel(){
+std::string CodeBuffer::genLabel(){
     std::stringstream label;
     label << "label_";
     label << buffer.size();
@@ -24,7 +26,7 @@ string CodeBuffer::genLabel(){
     return ret;
 }
 
-int CodeBuffer::emit(const string& s){
+int CodeBuffer::emit(const std::string& s){
     buffer.push_back(s);
     return buffer.size() - 1;
 }

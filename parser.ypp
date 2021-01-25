@@ -115,7 +115,7 @@ CGlobal:       /*epsilon*/	                                                {Vars
 																										delete FuncSymbolsTable_t;
 																										CodeBuffer::instance().printGlobalBuffer();
 																										CodeBuffer::instance().printCodeBuffer();
-}
+																										}
 
 
 Funcs :        /*epsilon*/													         	{}
@@ -124,8 +124,9 @@ Funcs :        /*epsilon*/													         	{}
 FuncDecl :     RetType ID LPAREN Formals RPAREN LBRACE                     {VarsSymbolsTable_t->addScopeFromFunc(*($2->str), $4->varsVec, $1->type);
                                                                             FuncSymbolsTable_t->addFunc(*($2->str), $4->varsVec, $1->type, VarsSymbolsTable_t);}
 
-                   Statements M RBRACE CScope	                           {FuncSymbolsTable::afterFunc($1->type);
-                                                                            CodeBuffer::instance().bpatch($8->statement.next_list, *($9->str));}
+                   Statements N M RBRACE CScope	                           {FuncSymbolsTable::afterFunc($1->type);
+                                                                            CodeBuffer::instance().bpatch($8->statement.next_list, *($10->str));
+                                                                            CodeBuffer::instance().bpatch($9->statement.next_list, *($10->str));}
 
 RetType :      Type														               {$$->type = $1->type;}
                   |  VOID												               {$$ = new utype(Types_enum::VOID_TYPE);}
@@ -140,7 +141,8 @@ FormalsList : 	FormalDecl												              	{$$->varsVec = $1->varsVec;}
 FormalDecl : 	Type ID													               {$$->varsVec = std::vector<Var>(1, Var(*($2->str), $1->type));}
 
 Statements :    Statement											              	   {$$ = $1;}
-                  | Statements M Statement							            {$$ = new utype(Statement_c::combineStatements($1->statement, *($2->str), $3->statement));}
+                  | Statements N M Statement							            {$$ = new utype(Statement_c::combineStatements($1->statement, *($3->str), $4->statement));
+                                                                             CodeBuffer::instance().bpatch($2->statement.next_list, *($3->str));}
 
 Statement : 	LBRACE OScope Statements CScope RBRACE							   {$$ = $3;}
                   | Type ID SC										              	{VarsSymbolsTable_t->addVar(*($2->str), $1->type);
@@ -158,7 +160,7 @@ Statement : 	LBRACE OScope Statements CScope RBRACE							   {$$ = $3;}
                                                                               FuncSymbolsTable::returnExp($2->exp);
                                                                               $$ = new utype();}
                   | IfStart RPAREN OScope M Statement CScope				                           {$$ = new utype(Statement_c::ifBlock($1->exp, *($4->str), $5->statement));}
-                  | IfStart RPAREN OScope M Statement CScope ELSE N OScope M Statement	CScope	   {$$ = new utype(Statement_c::ifElseBlock($1->exp, *($4->str), $5->statement, $7->statement, *($10->str), $11->statement)); }
+                  | IfStart RPAREN OScope M Statement CScope ELSE N OScope M Statement	CScope	   {$$ = new utype(Statement_c::ifElseBlock($1->exp, *($4->str), $5->statement, $8->statement, *($10->str), $11->statement)); }
                   | WhileStart RPAREN OScope OWhile M Statement CScope			                     {$$ = new utype(Statement_c::whileBlock(*($1->str), $1->exp, *($5->str), $6->statement));}
                   | BREAK SC													         {VarsSymbolsTable_t->checkWhile(*($1->str));
                                                                               $$ = new utype(Statement_c::breakComm());}

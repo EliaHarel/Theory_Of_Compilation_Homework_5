@@ -22,6 +22,7 @@ public:
     int getNumOfArgs(){
         return num_of_args;
     }
+
     std::string getID(){
         return ID;
     }
@@ -31,7 +32,7 @@ public:
     }
 
     string getllvmName(){
-        return "@_" + ID;
+        return ID != "print" && ID != "printi" ? "@_" + ID : "@" + ID;
     }
 };
 
