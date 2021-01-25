@@ -172,9 +172,13 @@ OWhile:         /*epsilon*/                                                {Vars
 IfStart:          IF LPAREN Exp                                            {Statement_c::checkExp($3->exp);
 																										$$ = $3;}
 
-WhileStart:       WHILE LPAREN M Exp                                       {Statement_c::checkExp($4->exp);
-																										$$ = $4;
-																										*($$->str) = *($3->str);}
+WhileStart:       WHILE LPAREN N M Exp                                       {
+                                                                              Statement_c::checkExp($5->exp);
+																										$$ = $5;
+																										$$->str = new std::string(*($4->str));
+                                                                              CodeBuffer::instance().bpatch($3->statement.next_list, *($4->str));
+                                                                              }
+
 																										
 Call :         ID LPAREN ExpList RPAREN									         {Expression temp_exp = FuncSymbolsTable_t->callFunc(*($1->str), $3->expsVec);
                                                                               $$ = new utype(temp_exp);}
@@ -235,6 +239,7 @@ N :            /*epsilon*/                                                 {$$ =
 %%
 
 main(){
+#define YYDEBUG 1
    yyparse();
 
 }

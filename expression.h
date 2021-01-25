@@ -460,8 +460,7 @@ public:
 
         CodeBuffer::instance().emitGlobal(
                 new_var.var_name + " = internal constant [" + to_string(str.length() + 2) + " x i8] c\"" +
-                str +
-                R"(\0A\00")");
+                str + "\\0A\\00\"");
         return new_var;
     }
 

@@ -116,8 +116,7 @@ public:
 
         int index = scopes[curr_scope].addVar(id, type, curr_scope);
         var_maps[id] = {curr_scope, index};
-
-        assign(index, type, exp);
+        assign(index, type, exp, curr_scope);
     }
 
     void typeCheckAndAssign(const std::string& id, const Expression& exp){
@@ -127,23 +126,23 @@ public:
             errorMismatch(yylineno);
             exit(1);
         }
-
+        int var_scope_index = var_maps[id].first;
         int index = var_maps[id].second;
-        assign(index, type, exp);
+        assign(index, type, exp, var_scope_index);
     }
 
     // TODO : Negative index for function arguments, goto arguments stack instead of the regular stack (also for sets).
-    void assign(int index, const Types& type, const Expression& exp){
+    void assign(int index, const Types& type, const Expression& exp, int var_scope_index){
 
         std::string ptr = Expression::gimmeANewCuteVar();
         switch (type.getType()){
             case Types_enum::INT_TYPE :
             case Types_enum::BYTE_TYPE :
-                printGetPtr(ptr, index);
-                CodeBuffer::instance().emit("store i32 " + exp.var_name + " i32* " + ptr);
+                printGetPtr(ptr, index, var_scope_index);
+                CodeBuffer::instance().emit("store i32 " + exp.var_name + ", i32* " + ptr);
                 break;
             case Types_enum::BOOL_TYPE :{
-                printGetPtr(ptr, index);
+                printGetPtr(ptr, index, var_scope_index);
                 std::string true_label = CodeBuffer::instance().genLabel();
                 CodeBuffer::instance().emit("store i32 1, i32* " + ptr);
                 int loc1 = CodeBuffer::instance().emit("br label @");
@@ -159,7 +158,7 @@ public:
                 break;
             }
             case Types_enum::SET_TYPE :
-                printGetPtrForSet(ptr, index);
+                printGetPtrForSet(ptr, index, var_scope_index);
                 CodeBuffer::instance().emit("store [256 x i1] " + exp.var_name + ", [256 x i1]* " + ptr);
                 break;
             default:
@@ -167,9 +166,9 @@ public:
         }
     }
 
-    void printGetPtr(const std::string& ptr, int index){
-        int offset = scopes[curr_scope].vars[index].getOffset();
-        int num_of_args = scopes[curr_scope].getNumArgs();
+    void printGetPtr(const std::string& ptr, int index, int var_scope_index){
+        int offset = scopes[var_scope_index].vars[index].getOffset();
+        int num_of_args = scopes[1].getNumArgs();
         if(offset >= 0){
             CodeBuffer::instance().emit(
                     ptr + " = getelementptr [50 x i32] , [50 x i32]* %locals, i32 0, i32 " +
@@ -183,9 +182,9 @@ public:
         }
     }
 
-    void printGetPtrForSet(const std::string& ptr, int index){
-        int offset = scopes[curr_scope].vars[index].getOffset();
-        int num_of_args = scopes[curr_scope].getNumArgs();
+    void printGetPtrForSet(const std::string& ptr, int index, int var_scope_index){
+        int offset = scopes[var_scope_index].vars[index].getOffset();
+        int num_of_args = scopes[1].getNumArgs();
         if(offset >= 0){
             CodeBuffer::instance().emit(ptr +
                                         " = getelementptr [50 x [256 x i1]*] , [50 x [256 x i1]*]* %locals_set, [256 x i1]* 0, [256 x i1]* " +
@@ -277,16 +276,17 @@ public:
         Types id_type = getVarSymbolTableType(id);
         Expression new_var(id_type);
         int index = var_maps[id].second;
+        int var_scope_index = var_maps[id].first;
         std::string ptr = Expression::gimmeANewCuteVar();
 
         switch (id_type.getType()){
             case Types_enum::INT_TYPE:
             case Types_enum::BYTE_TYPE:
-                printGetPtr(ptr, index);
+                printGetPtr(ptr, index, var_scope_index);
                 CodeBuffer::instance().emit(new_var.var_name + " = load i32, i32* " + ptr);
                 break;
             case Types_enum::BOOL_TYPE:{
-                printGetPtr(ptr, index);
+                printGetPtr(ptr, index,var_scope_index);
                 std::string val = Expression::gimmeANewCuteVar();
                 std::string bool_val = Expression::gimmeANewCuteVar();
                 CodeBuffer::instance().emit(val + " = load i32, i32* " + ptr);
@@ -297,7 +297,7 @@ public:
                 break;
             }
             case Types_enum::SET_TYPE:{
-                printGetPtrForSet(ptr, index);
+                printGetPtrForSet(ptr, index, var_scope_index);
                 CodeBuffer::instance().emit(new_var.var_name + " = load [256 x i1]*, [256 x i1]** " + ptr);
                 break;
 
