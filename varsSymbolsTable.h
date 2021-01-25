@@ -178,7 +178,7 @@ public:
             offset = abs(offset);
             CodeBuffer::instance().emit(
                     ptr + " = getelementptr [" + to_string(num_of_args) + " x i32] , [" +
-                    to_string(num_of_args) + " x i32]* %args, i32 0, i32 " + to_string(offset));
+                    to_string(num_of_args) + " x i32]* %args, i32 0, i32 " + to_string(offset-1));
 
         }
     }
@@ -194,7 +194,7 @@ public:
             CodeBuffer::instance().emit(ptr + " = getelementptr [" + to_string(num_of_args) +
                                         " x [256 x i1]*] , [" + to_string(num_of_args) +
                                         " x [256 x i1]*]* %args_set, [256 x i1]* 0, [256 x i1]* " +
-                                        to_string(offset));
+                                        to_string(offset-1));
         }
     }
 
