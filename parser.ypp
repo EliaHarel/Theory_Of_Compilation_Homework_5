@@ -114,6 +114,8 @@ Global:        /*epsilon*/	                                                {Func
 CGlobal:       /*epsilon*/	                                                {VarsSymbolsTable_t->deleteScope(true);
 																										delete VarsSymbolsTable_t;
 																										delete FuncSymbolsTable_t;
+																										CodeBuffer::instance().printGlobalBuffer();
+																										CodeBuffer::instance().printCodeBuffer();
 }
 
 

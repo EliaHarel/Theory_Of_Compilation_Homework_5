@@ -47,8 +47,27 @@ void castArrToi256(){
 */
 
 void printGlobalFuncs(){
+    CodeBuffer::instance().emitGlobal("declare i32 @printf(i8*, ...)");
+    CodeBuffer::instance().emitGlobal("declare void @exit(i32)");
+    CodeBuffer::instance().emitGlobal("declare void @llvm.memset.p0i8.i64(i8* , i8, i64, i1)");
 
+    CodeBuffer::instance().emitGlobal("@.int_specifier = constant [4 x i8] c\"%d\\0A\\00\"");
+    CodeBuffer::instance().emitGlobal("@.str_specifier = constant [4 x i8] c\"%s\\0A\\00\"");
+    CodeBuffer::instance().emitGlobal("@.str_zero = constant [23 x i8] c\"Error division by zero\\0A\\00\"");
+    CodeBuffer::instance().emitGlobal("@.str_plus = constant [30 x i8] c\"\"Error out of set range. Op: +\\0A\\00\"");
+    CodeBuffer::instance().emitGlobal("@.str_minus = constant [30 x i8] c\"\"Error out of set range. Op: -\\0A\\00\"");
+    CodeBuffer::instance().emitGlobal("@.str_in = constant [31 x i8] c\"\"Error out of set range. Op: in\\0A\\00\"");
+
+    CodeBuffer::instance().emitGlobal("define void @printi(i32) {");
+    CodeBuffer::instance().emitGlobal("call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.int_specifier, i32 0, i32 0), i32 %0)");
+    CodeBuffer::instance().emitGlobal("ret void");
+    CodeBuffer::instance().emitGlobal("}");
+
+    CodeBuffer::instance().emitGlobal("define void @print(i8*) {");
+    CodeBuffer::instance().emitGlobal("call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.str_specifier, i32 0, i32 0), i8* %0)");
+    CodeBuffer::instance().emitGlobal("ret void");
 }
+
 
 
 

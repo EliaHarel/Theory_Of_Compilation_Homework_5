@@ -131,9 +131,7 @@ public:
             CodeBuffer::instance().emit(cond + " = icmp eq i32 " + t.var_name + ", 0");
             int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
             std::string true_label = CodeBuffer::instance().genLabel();
-            //todo: save thr string in advance and add reference to it
-            //todo: calling to functions!
-            CodeBuffer::instance().emit("call i8* @print( i8* Error division by zero)");
+            CodeBuffer::instance().emit("call void @print( i8* getelementptr ([23 x i8], [23 x i8]* @str_zero, i32 0, i32 0))");
             CodeBuffer::instance().emit("call void @exit(i32 1)");
             int true_to_exit = CodeBuffer::instance().emit("br label @");
 
@@ -323,11 +321,11 @@ public:
         //todo: save thr  std::string in advance and add reference to it
         //todo: calling to functions!
         if(op == "add"){
-            CodeBuffer::instance().emit("call i8* @print( i8* Error out of set range. Op: +)");
+            CodeBuffer::instance().emit("call i8* @print( i8* getelementptr ([30 x i8], [30 x i8]* @str_plus, i32 0, i32 0)");
         }else if(op == "sub"){
-            CodeBuffer::instance().emit("call i8* @print( i8* Error out of set range. Op: -)");
+            CodeBuffer::instance().emit("call i8* @print( i8* getelementptr ([30 x i8], [30 x i8]* @str_minus, i32 0, i32 0)");
         }else{ // op == "in"
-            CodeBuffer::instance().emit("call i8* @print( i8* Error out of set range. Op: in)");
+            CodeBuffer::instance().emit("call i8* @print( i8* getelementptr ([31 x i8], [31 x i8]* @str_in, i32 0, i32 0)");
 
         }
         CodeBuffer::instance().emit("call void @exit(i32 1)");
