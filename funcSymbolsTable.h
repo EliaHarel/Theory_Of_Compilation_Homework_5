@@ -61,7 +61,7 @@ public:
             if(i > 0){
                 func_dec += ", ";
             }
-            func_dec += TypeTollvmStr(ordered_args[i].getVarType().getType()) + " %" + to_string(i);
+            func_dec += TypeTollvmStr(ordered_args[i].getVarType().getType());
         }
 
         func_dec += ") {";
