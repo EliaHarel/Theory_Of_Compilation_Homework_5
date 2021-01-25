@@ -1,0 +1,10 @@
+void main()
+{
+	set[100..105] x;
+	int i = 100;
+	while(i < 350 and (not (101 in x))) {
+		x = x + i;
+		i = i + 2;
+		printi((int) x);
+	}
+}

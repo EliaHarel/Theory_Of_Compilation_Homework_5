@@ -18,6 +18,7 @@ typedef std::string Label;
 
 class Expression {
     static int new_var_counter;
+
     bool isNum() const{ return type == Types_enum::INT_TYPE || type == Types_enum::BYTE_TYPE; }
 
 public:
@@ -131,7 +132,8 @@ public:
             CodeBuffer::instance().emit(cond + " = icmp eq i32 " + t.var_name + ", 0");
             int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
             std::string true_label = CodeBuffer::instance().genLabel();
-            CodeBuffer::instance().emit("call void @print( i8* getelementptr ([23 x i8], [23 x i8]* @str_zero, i32 0, i32 0))");
+            CodeBuffer::instance().emit(
+                    "call void @print( i8* getelementptr ([23 x i8], [23 x i8]* @str_zero, i32 0, i32 0))");
             CodeBuffer::instance().emit("call void @exit(i32 1)");
             int true_to_exit = CodeBuffer::instance().emit("br label @");
 
@@ -321,11 +323,14 @@ public:
         //todo: save thr  std::string in advance and add reference to it
         //todo: calling to functions!
         if(op == "add"){
-            CodeBuffer::instance().emit("call i8* @print( i8* getelementptr ([30 x i8], [30 x i8]* @str_plus, i32 0, i32 0)");
+            CodeBuffer::instance().emit(
+                    "call i8* @print( i8* getelementptr ([30 x i8], [30 x i8]* @str_plus, i32 0, i32 0)");
         }else if(op == "sub"){
-            CodeBuffer::instance().emit("call i8* @print( i8* getelementptr ([30 x i8], [30 x i8]* @str_minus, i32 0, i32 0)");
+            CodeBuffer::instance().emit(
+                    "call i8* @print( i8* getelementptr ([30 x i8], [30 x i8]* @str_minus, i32 0, i32 0)");
         }else{ // op == "in"
-            CodeBuffer::instance().emit("call i8* @print( i8* getelementptr ([31 x i8], [31 x i8]* @str_in, i32 0, i32 0)");
+            CodeBuffer::instance().emit(
+                    "call i8* @print( i8* getelementptr ([31 x i8], [31 x i8]* @str_in, i32 0, i32 0)");
 
         }
         CodeBuffer::instance().emit("call void @exit(i32 1)");
@@ -421,21 +426,20 @@ public:
 
     Expression call(){
         Expression new_var(type);
-        switch(type.getType()){
+        switch (type.getType()){
             case Types_enum::INT_TYPE:
             case Types_enum::BYTE_TYPE:
                 CodeBuffer::instance().emit(new_var.var_name + " = add i32 0, " + var_name);
                 break;
-            case Types_enum::BOOL_TYPE:
-            {
+            case Types_enum::BOOL_TYPE:{
                 int loc = CodeBuffer::instance().emit("br i1 " + var_name + " label @, label @");
                 new_var.true_list = CodeBuffer::makelist({loc, FIRST});
-                new_var.false_list = CodeBuffer::makelist({loc,SECOND});
+                new_var.false_list = CodeBuffer::makelist({loc, SECOND});
                 break;
             }
             case Types_enum::SET_TYPE:
                 CodeBuffer::instance().emit(new_var.var_name + " alloca [256 x i1]");
-                CodeBuffer::instance().emit("store i256 "+ var_name + " [256 x i1]*" + new_var.var_name);
+                CodeBuffer::instance().emit("store i256 " + var_name + " [256 x i1]*" + new_var.var_name);
                 break;
             default:
                 break;
@@ -445,6 +449,16 @@ public:
 
     static std::string gimmeANewCuteVar(){
         return "%newCuteVar_" + std::to_string(new_var_counter++);
+    }
+
+    static Expression handlingString(std::string str){
+        Expression new_var(Types_enum::STRING_TYPE);
+        new_var.var_name[0] = '@';
+        new_var.var_name[1] = '.';
+        CodeBuffer::instance().emitGlobal(
+                new_var.var_name + " = internal constant [" + to_string(str.length() + 2) + " x i8] c\"" + str +
+                R"(\0A\00")" + '\n');
+        return new_var;
     }
 
 };

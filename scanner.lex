@@ -57,7 +57,10 @@ in                                  return RELOP_IN;
 												 	return ID;}
 0|[1-9][0-9]*                       {yylval = new utype(atoi(yytext));
 													return NUM;}
-\"([^\n\r\"\\]|\\[rnt"\\])+\"       return STRING;
+\"([^\n\r\"\\]|\\[rnt"\\])+\"       {std::string temp (yytext);
+													temp = temp.substr(1, temp.size()-2);
+													yylval = new utype(temp);
+												 	return STRING;}
 \/\/[^\r\n]*[\r|\n|\r\n]?           ;
 [ \t\n\r]+                          ;
 .                                   {output::errorLex(yylineno); exit(1);};

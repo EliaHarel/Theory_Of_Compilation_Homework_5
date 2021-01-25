@@ -1,5 +1,4 @@
 %{
-   #include "testsFile.cpp"   //              DONT FORGET TO REMOVE THISE
    #include "attributes.hpp"
    #include "bp.hpp"
 	#define YYERROR_VERBOSE 1
@@ -206,7 +205,8 @@ Exp :          LPAREN Exp RPAREN								            			{$$ = new utype($2->exp);
                                                                               $$ = new utype(temp_exp);}
                   | NUM B										         				{Expression temp_exp = Expression::printNum($1->num, Types_enum::BYTE_TYPE);
                                                                               $$ = new utype(temp_exp);}
-                  | STRING													            {$$ = new utype(Types_enum::STRING_TYPE);}
+                  | STRING													            {Expression temp_exp = Expression::handlingString(*($1->str));
+                                                                              $$ = new utype(temp_exp);}
                   | TRUE														         {Expression temp_exp = Expression::boolExp(true);
 																										$$ = new utype(temp_exp);}
                   | FALSE														         {Expression temp_exp = Expression::boolExp(false);
@@ -233,8 +233,7 @@ N :            /*epsilon*/                                                 {$$ =
 %%
 
 main(){
-   testsFunctionMain();
-   //yyparse();
+   yyparse();
 
 }
 

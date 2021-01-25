@@ -11,7 +11,4 @@ void testsFunctionMain(){
     std::cout << Expression::gimmeANewCuteVar() << std::endl;
     std::cout << Expression::gimmeANewCuteVar() << std::endl;
 
-    while(true){
-
-    }
 }

@@ -212,10 +212,10 @@ public:
             exit(1);
         }
 
-        output::endScope();
+//        output::endScope();
 
         for (auto &iter : scopes[curr_scope].vars) {
-            output::printID(iter.getId(), iter.getOffset(), enumToString(iter.getVarType()));
+//            output::printID(iter.getId(), iter.getOffset(), enumToString(iter.getVarType()));
             var_maps.erase(iter.getId());
         }
         scopes.pop_back();
