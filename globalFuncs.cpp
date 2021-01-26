@@ -67,6 +67,46 @@ void printGlobalFuncs(){
     CodeBuffer::instance().emitGlobal(R"(@.str_plus = internal constant [31 x i8] c"Error out of set range. Op: +\0A\00")");
     CodeBuffer::instance().emitGlobal(R"(@.str_minus = internal constant [31 x i8] c"Error out of set range. Op: -\0A\00")");
     CodeBuffer::instance().emitGlobal(R"(@.str_in = internal constant [32 x i8] c"Error out of set range. Op: in\0A\00")");
+
+    CodeBuffer::instance().emitGlobal("declare i256 @llvm.fshl.i256(i256, i256, i256)");
+    CodeBuffer::instance().emitGlobal("declare i256 @llvm.ctpop.i256(i256)");
+
+    CodeBuffer::instance().emitGlobal("define i256 @SetAdd(i256, i256) {");
+    CodeBuffer::instance().emitGlobal("        %temp_num = call i256 @llvm.fshl.i256(i256 1, i256 1, i256 %1)");
+    CodeBuffer::instance().emitGlobal("        %set_res = or i256 %0, %temp_num");
+    CodeBuffer::instance().emitGlobal("        ret i256 %set_res");
+    CodeBuffer::instance().emitGlobal("}");
+
+    CodeBuffer::instance().emitGlobal("define i256 @SetSub(i256, i256) {");
+    CodeBuffer::instance().emitGlobal("        %ones_val = sub i256 0, 2");
+    CodeBuffer::instance().emitGlobal("        %temp_num = call i256 @llvm.fshl.i256(i256 %ones_val, i256 %ones_val, i256 %1)");
+    CodeBuffer::instance().emitGlobal("        %set_res = and i256 %0, %temp_num");
+    CodeBuffer::instance().emitGlobal("        ret i256 %set_res");
+    CodeBuffer::instance().emitGlobal("}");
+
+
+    CodeBuffer::instance().emitGlobal("    define i1 @SetContains(i256, i256) {");
+    CodeBuffer::instance().emitGlobal("        %temp_num = call i256 @llvm.fshl.i256(i256 1, i256 1, i256 %1)");
+    CodeBuffer::instance().emitGlobal("        %res = and i256 %0, %temp_num");
+    CodeBuffer::instance().emitGlobal("        %cond = icmp ne i256 0, %res");
+    CodeBuffer::instance().emitGlobal("        br i1 %cond, label %Return_True, label %Return_False");
+    CodeBuffer::instance().emitGlobal("        Return_True:");
+    CodeBuffer::instance().emitGlobal("             ret i1 1");
+    CodeBuffer::instance().emitGlobal("        Return_False:");
+    CodeBuffer::instance().emitGlobal("             ret i1 0");
+    CodeBuffer::instance().emitGlobal("}");
+
+
+    CodeBuffer::instance().emitGlobal("    define i32 @SetCast(i256) {");
+    CodeBuffer::instance().emitGlobal("        %res_256 = call i256 @llvm.ctpop.i256(i256 %0)");
+    CodeBuffer::instance().emitGlobal("        %res = trunc i256 %res_256 to i32");
+    CodeBuffer::instance().emitGlobal("        ret i32 %res");
+    CodeBuffer::instance().emitGlobal("}");
+
+
+
+
+
 //    CodeBuffer::instance().emitGlobal("declare void @llvm.memset.p0i8.i64(i8* , i8, i64, i1)");
 //    CodeBuffer::instance().emitGlobal("declare i8* @memset(i8*, i32, i32)");
 

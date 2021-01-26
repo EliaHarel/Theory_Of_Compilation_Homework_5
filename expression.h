@@ -172,10 +172,11 @@ public:
             }
 
             Expression new_var(t.type);
-            CodeBuffer::instance().emit(new_var.var_name + " = alloca [256 x i1]");
+            changeSet(new_var, t, *this, op );
+          /*  CodeBuffer::instance().emit(new_var.var_name + " = alloca [256 x i1]");
 
             handleSet(t, new_var, "copy");
-            changeSet(new_var, *this, op);
+            changeSet(new_var, *this, op);*/
             return new_var;
         }else if(type.getType() == Types_enum::SET_TYPE){
             if(!t.isNum()){
@@ -184,9 +185,11 @@ public:
             }
 
             Expression new_var(type);
-            CodeBuffer::instance().emit(new_var.var_name + " = alloca [256 x i1]");
-            handleSet(*this, new_var, "copy");
-            changeSet(new_var, t, op);
+            changeSet(new_var, *this, t, op);
+
+            /*      CodeBuffer::instance().emit(new_var.var_name + " = alloca [256 x i1]");
+                  handleSet(*this, new_var, "copy");
+                  changeSet(new_var, t, op);*/
             return new_var;
         }else{
             Types_enum temp = byteIntCheck(*this, t);
@@ -197,6 +200,21 @@ public:
             }
             return new_var;
         }
+    }
+
+    static void changeSet(const Expression& new_set, const Expression& set, const Expression& num, const std::string& op){
+        checkSetVal(set, num, op);
+        std::string loc_in_arr = gimmeANewCuteVar();
+        print3ACArithmetic(loc_in_arr, num.var_name, "sub", to_string(set.type.getSetRange().first));
+        std::string shift = gimmeANewCuteVar();
+        CodeBuffer::instance().emit(shift + " = zext i32 " + loc_in_arr + " to i256");
+
+        if( op == "add"){
+            CodeBuffer::instance().emit(new_set.var_name + " = call i256 @SetAdd(i256 " + set.var_name = ", i256 " + shift + ")");
+        }else{ //op == "sub"
+            CodeBuffer::instance().emit(new_set.var_name + " = call i256 @SetSub(i256 " + set.var_name = ", i256 " + shift + ")");
+        }
+/*        CodeBuffer::instance().emit("store i1 " + to_string(val) + ", i1* " + loc_in_mem);*/
     }
 
     static Expression boolExp(bool b){
@@ -296,27 +314,36 @@ public:
             exit(1);
         }
         checkSetVal(t, *this, "in");
-        std::string loc_in_mem = getLocInSet(t, *this);
-        std::string val_in_mem = gimmeANewCuteVar();
-        CodeBuffer::instance().emit(val_in_mem + " = load i1, i1* " + loc_in_mem);
+        std::string loc_in_arr = gimmeANewCuteVar();
+        print3ACArithmetic(loc_in_arr, (*this).var_name, "sub", to_string(t.type.getSetRange().first));
 
-        std::string cond = gimmeANewCuteVar();
-        CodeBuffer::instance().emit(cond + " = icmp eq i1 " + val_in_mem + ", 1");
-        int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
+        std::string zext = Expression::gimmeANewCuteVar();
+        CodeBuffer::instance().emit(zext + " = zext i32 "+ (*this).var_name + " to i256");
+        std::string is_in_arr = Expression::gimmeANewCuteVar();
+        CodeBuffer::instance().emit(is_in_arr + " = call i1 @setContains(i256 " + t.var_name + ", i256 " + zext + ")");
+
+        int loc = CodeBuffer::instance().emit("br i1 " + is_in_arr + ", label @, label @");
 
         Expression new_var(Types_enum::BOOL_TYPE);
         new_var.true_list = CodeBuffer::makelist({loc, FIRST});
         new_var.false_list = CodeBuffer::makelist({loc, SECOND});
 
+        /* std::string loc_in_mem = getLocInSet(t, *this);
+         std::string val_in_mem = gimmeANewCuteVar();
+         CodeBuffer::instance().emit(val_in_mem + " = load i1, i1* " + loc_in_mem);
+
+         std::string cond = gimmeANewCuteVar();
+         CodeBuffer::instance().emit(cond + " = icmp eq i1 " + val_in_mem + ", 1");
+         int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
+
+         Expression new_var(Types_enum::BOOL_TYPE);
+         new_var.true_list = CodeBuffer::makelist({loc, FIRST});
+         new_var.false_list = CodeBuffer::makelist({loc, SECOND});
+ */
         return new_var;
     }
 
-    static void changeSet(const Expression& set, const Expression& num, const std::string& op){
-        checkSetVal(set, num, op);
-        std::string loc_in_mem = getLocInSet(set, num);
-        int val = (op == "add") ? 1 : 0;
-        CodeBuffer::instance().emit("store i1 " + to_string(val) + ", i1* " + loc_in_mem);
-    }
+
 
     static void checkSetVal(const Expression& set, const Expression& num, const std::string& op){
         std::string cond1_name = gimmeANewCuteVar();
@@ -401,15 +428,14 @@ public:
         }
     }
 
-    Expression cast(const Types t){
+    Expression cast(const Types& t){
         if(t != Types_enum::INT_TYPE || type.getType() != Types_enum::SET_TYPE){
             output::errorMismatch(yylineno);
             exit(1);
         }
-
-        std::string reg = handleSet(*this, Expression(), "sum");
-        Expression new_var(Types_enum::INT_TYPE, reg);
-
+        Expression new_var(Types_enum::INT_TYPE);
+        CodeBuffer::instance().emit(new_var.var_name + " = call i32 @setCast(i256 " + (*this).var_name + " )");
+       /* std::string reg = handleSet(*this, Expression(), "sum");*/
         return new_var;
     }
 
