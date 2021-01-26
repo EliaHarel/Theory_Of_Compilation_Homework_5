@@ -279,7 +279,7 @@ public:
                     func_call += "i32 " + ordered_params[i].var_name;
                     break;
                 case Types_enum::BOOL_TYPE:{
-                    int loc = CodeBuffer::instance().emit("br label @");
+ /*                   int loc = CodeBuffer::instance().emit("br label @");
                     std::string true_list_label = CodeBuffer::instance().genLabel();
                     int true_loc = CodeBuffer::instance().emit("br label @");
                     std::string false_list_label = CodeBuffer::instance().genLabel();
@@ -296,8 +296,11 @@ public:
 
                     CodeBuffer::instance().bpatch(CodeBuffer::makelist({true_loc, FIRST}), exit);
                     CodeBuffer::instance().bpatch(CodeBuffer::makelist({false_loc, FIRST}), exit);
-
                     func_call += "i1 " + new_var;
+
+*/
+                    func_call += "i1 "+ ordered_params[i].var_name;
+
                     break;
                 }
                 case Types_enum::SET_TYPE:{
@@ -320,6 +323,33 @@ public:
         func_call += ")";
         CodeBuffer::instance().emit(func_call);
         return ret_exp;
+    }
+
+    static Expression handleExp(const Expression& exp){
+        if(exp.type != Types_enum::BOOL_TYPE){
+            return exp;
+        }else{
+            int loc = CodeBuffer::instance().emit("br label @");
+            std::string true_list_label = CodeBuffer::instance().genLabel();
+            int true_loc = CodeBuffer::instance().emit("br label @");
+            std::string false_list_label = CodeBuffer::instance().genLabel();
+            int false_loc = CodeBuffer::instance().emit("br label @");
+
+            CodeBuffer::instance().bpatch(exp.true_list, true_list_label);
+            CodeBuffer::instance().bpatch(exp.false_list, false_list_label);
+            CodeBuffer::instance().bpatch(CodeBuffer::makelist({loc, FIRST}), true_list_label);
+            Expression new_var(Types_enum::BOOL_TYPE);
+
+            std::string exit = CodeBuffer::instance().genLabel();
+            CodeBuffer::instance().emit(
+                    new_var.var_name + " = phi i1 [ 1, %" + true_list_label + " ], [ 0, %" + false_list_label +
+                    " ]");
+
+            CodeBuffer::instance().bpatch(CodeBuffer::makelist({true_loc, FIRST}), exit);
+            CodeBuffer::instance().bpatch(CodeBuffer::makelist({false_loc, FIRST}), exit);
+
+            return new_var;
+        }
     }
 
     bool isMain(){

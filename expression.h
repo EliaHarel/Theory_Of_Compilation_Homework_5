@@ -49,7 +49,8 @@ public:
         type = rhs.type;
         true_list = rhs.true_list;
         false_list = rhs.false_list;
-        var_name = gimmeANewCuteVar();
+        //var_name = gimmeANewCuteVar();
+        var_name = rhs.var_name;
         str_length = rhs.str_length;
         return *this;
     }

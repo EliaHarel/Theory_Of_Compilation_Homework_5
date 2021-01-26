@@ -185,9 +185,20 @@ Call :         ID LPAREN ExpList RPAREN									         {Expression temp_exp = 
                   | ID LPAREN RPAREN							      				{Expression temp_exp = FuncSymbolsTable_t->callFunc(*($1->str), std::vector<Expression>());
                                                                               $$ = new utype(temp_exp);}
 
-ExpList :         Exp														         	{$$->expsVec = std::vector<Expression>(1, $1->exp);}
-                  | Exp COMMA ExpList							      				{$3->expsVec.push_back($1->exp);
-																										$$->expsVec = $3->expsVec;}
+ExpList :         Exp														         	{if ($1->exp.type == Types_enum::BOOL_TYPE){
+                                                                                 $$->expsVec = std::vector<Expression>(1, FuncSymbolsTable::handleExp($1->exp));}
+                                                                              else{
+                                                                                 $$->expsVec = std::vector<Expression>(1, $1->exp);}
+                                                                             }
+
+                  | Exp COMMA                                              {if ($1->exp.type == Types_enum::BOOL_TYPE){
+                                                                              Expression temp_exp = FuncSymbolsTable::handleExp($1->exp);
+                                                                              $1->exp = temp_exp;
+                                                                             }
+                                                                             }
+                     ExpList							      			            {$4->expsVec.push_back($1->exp);
+      																								$$->expsVec = $4->expsVec;}
+
 
 Type :         INT															            {$$ = new utype(Types_enum::INT_TYPE);}
                   | BYTE													         	{$$ = new utype(Types_enum::BYTE_TYPE);}
