@@ -31,6 +31,8 @@ make &> /dev/null
 
 cp hw5 ${tmpdir}/
 
+cd "$tmpdir"
+
 if [[ ! -f "hw5-tests.zip" ]]; then
   wget --no-check-certificate "$testsurl" &> /dev/null
 fi
@@ -48,16 +50,16 @@ then
   exit
 fi
 
-cd "$tmpdir"
+
 
 
 i="1"
 while [ $i -le $numtests ]
 do
   ./hw5 < t$i.in 2>&1 > t$i.ll
-  echo "Hello Mufasa"
+  # echo "Hello Mufasa"
   lli t$i.ll > t$i.res
-  echo "GoodBye Mufasa"
+  # echo "GoodBye Mufasa"
   diff t$i.res t$i.out &> /dev/null
   if [[ $? != 0 ]]
   then
@@ -69,7 +71,7 @@ do
 done
 
 cd - &> /dev/null
-# rm -rf "$tmpdir"
+rm -r "$tmpdir"
 
 echo "Ok to submit :)"
 exit
