@@ -81,13 +81,15 @@ public:
         CodeBuffer::instance().bpatch(stm1.next_list, marker);
         Statement_c new_statement;
         new_statement.next_list = stm2.next_list;
+        new_statement.break_list = CodeBuffer::merge(stm1.break_list, stm2.break_list);
+        new_statement.continue_list = CodeBuffer::merge(stm1.continue_list, stm2.continue_list);
         return new_statement;
     }
 
     static Statement_c breakComm(){
         int loc = CodeBuffer::instance().emit("br label @");
         Statement_c new_statement;
-        new_statement.break_list.emplace_back(pair<int, BranchLabelIndex>(loc, FIRST));
+        new_statement.break_list = CodeBuffer::makelist({loc, FIRST});
         return new_statement;
     }
 

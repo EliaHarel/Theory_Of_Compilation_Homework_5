@@ -144,12 +144,14 @@ public:
                 CodeBuffer::instance().emit("ret " + TypeTollvmStr(exp.type.getType()) + " " + exp.var_name);
                 break;
             case Types_enum::BOOL_TYPE:{
+                int loc = CodeBuffer::instance().emit("br label @");
                 std::string true_label = CodeBuffer::instance().genLabel();
                 CodeBuffer::instance().emit("ret i1 1");
                 std::string false_label = CodeBuffer::instance().genLabel();
                 CodeBuffer::instance().emit("ret i1 0");
                 CodeBuffer::instance().bpatch(exp.true_list, true_label);
                 CodeBuffer::instance().bpatch(exp.false_list, false_label);
+                CodeBuffer::instance().bpatch(CodeBuffer::makelist({loc, FIRST}), true_label);
                 break;
             }
             case Types_enum::SET_TYPE:{
@@ -277,6 +279,7 @@ public:
                     func_call += "i32 " + ordered_params[i].var_name;
                     break;
                 case Types_enum::BOOL_TYPE:{
+                    int loc = CodeBuffer::instance().emit("br label @");
                     std::string true_list_label = CodeBuffer::instance().genLabel();
                     int true_loc = CodeBuffer::instance().emit("br label @");
                     std::string false_list_label = CodeBuffer::instance().genLabel();
@@ -284,7 +287,7 @@ public:
 
                     CodeBuffer::instance().bpatch(ordered_params[i].true_list, true_list_label);
                     CodeBuffer::instance().bpatch(ordered_params[i].false_list, false_list_label);
-
+                    CodeBuffer::instance().bpatch(CodeBuffer::makelist({loc, FIRST}), true_list_label);
                     std::string new_var = Expression::gimmeANewCuteVar();
                     std::string exit = CodeBuffer::instance().genLabel();
                     CodeBuffer::instance().emit(

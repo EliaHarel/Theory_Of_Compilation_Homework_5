@@ -142,11 +142,14 @@ public:
                 CodeBuffer::instance().emit("store i32 " + exp.var_name + ", i32* " + ptr);
                 break;
             case Types_enum::BOOL_TYPE :{
-                printGetPtr(ptr, index, var_scope_index);
+                int location = CodeBuffer::instance().emit("br label @");
                 std::string true_label = CodeBuffer::instance().genLabel();
+                printGetPtr(ptr, index, var_scope_index);
                 CodeBuffer::instance().emit("store i32 1, i32* " + ptr);
                 int loc1 = CodeBuffer::instance().emit("br label @");
                 std::string false_label = CodeBuffer::instance().genLabel();
+                ptr = Expression::gimmeANewCuteVar();
+                printGetPtr(ptr, index, var_scope_index);
                 CodeBuffer::instance().emit("store i32 0, i32* " + ptr);
                 int loc2 = CodeBuffer::instance().emit("br label @");
                 std::string end_label = CodeBuffer::instance().genLabel();
@@ -155,6 +158,8 @@ public:
                 CodeBuffer::instance().bpatch(exp.false_list, false_label);
                 CodeBuffer::instance().bpatch(CodeBuffer::makelist({loc1, FIRST}), end_label);
                 CodeBuffer::instance().bpatch(CodeBuffer::makelist({loc2, FIRST}), end_label);
+                CodeBuffer::instance().bpatch(CodeBuffer::makelist({location, FIRST}), true_label);
+
                 break;
             }
             case Types_enum::SET_TYPE :

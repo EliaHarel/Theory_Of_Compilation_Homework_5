@@ -135,7 +135,7 @@ public:
             int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
             std::string true_label = CodeBuffer::instance().genLabel();
             CodeBuffer::instance().emit(
-                    "call void @print( i8* getelementptr ([23 x i8], [23 x i8]* @.str_zero, i32 0, i32 0))");
+                    "call void @print( i8* getelementptr ([24 x i8], [24 x i8]* @.str_zero, i32 0, i32 0))");
             CodeBuffer::instance().emit("call void @exit(i32 1)");
             int true_to_exit = CodeBuffer::instance().emit("br label @");
 
