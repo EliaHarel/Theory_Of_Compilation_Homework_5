@@ -135,7 +135,7 @@ public:
             int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
             std::string true_label = CodeBuffer::instance().genLabel();
             CodeBuffer::instance().emit(
-                    "call void @print( i8* getelementptr ([23 x i8], [23 x i8]* @str_zero, i32 0, i32 0))");
+                    "call void @print( i8* getelementptr ([23 x i8], [23 x i8]* @.str_zero, i32 0, i32 0))");
             CodeBuffer::instance().emit("call void @exit(i32 1)");
             int true_to_exit = CodeBuffer::instance().emit("br label @");
 
@@ -172,6 +172,7 @@ public:
 
             Expression new_var(t.type);
             CodeBuffer::instance().emit(new_var.var_name + " = alloca [256 x i1]");
+
             handleSet(t, new_var, "copy");
             changeSet(new_var, *this, op);
             return new_var;
@@ -210,10 +211,11 @@ public:
     }
 
     static std::string handleSet(const Expression& src, const Expression& dst, const std::string& func){
-
+        int label_location = CodeBuffer::instance().emit("br label @");
         std::string init_label = CodeBuffer::instance().genLabel();
+        CodeBuffer::instance().bpatch(CodeBuffer::makelist({label_location, FIRST}), init_label);
         std::string sum;
-        if(func == "sum"){
+        if(func == "sum")   {
             sum = gimmeANewCuteVar();
             CodeBuffer::instance().emit(sum + " = alloca i32");
             CodeBuffer::instance().emit("store i32 0, i32* " + sum);
@@ -232,7 +234,7 @@ public:
         std::string false_label = CodeBuffer::instance().genLabel();
         std::string src_var = gimmeANewCuteVar();
         std::string src_comm =
-                "getelementptr [256 * i1], [256 * i1]* " + src.var_name + " i1 0, i1 " + counter;
+                "getelementptr [256 x i1], [256 x i1]* " + src.var_name + ", i1 0, i32 " + counter;
         CodeBuffer::instance().emit(src_var + " = " + src_comm);
 
         //TODO: if this doesn't work - memcpy, memset
@@ -241,10 +243,10 @@ public:
             CodeBuffer::instance().emit(val + " = load i1, i1* " + src_var);
             std::string dst_var = gimmeANewCuteVar();
             std::string dst_comm =
-                    "getelementptr [256 * i1], [256 * i1]* " + dst.var_name + " i1 0, i1 " + counter;
+                    "getelementptr [256 x i1], [256 x i1]* " + dst.var_name + ", i1 0, i32 " + counter;
             CodeBuffer::instance().emit(dst_var + " = " + src_comm);
             CodeBuffer::instance().emit("store i1 " + val + ", i1* " + dst_var);
-        }else if(func == "init_label"){
+        }else if(func == "init"){
             CodeBuffer::instance().emit("store i1 0 , i1* " + src_var);
         }else{ // func == "sum"
             std::string temp_sum = gimmeANewCuteVar();
@@ -253,6 +255,7 @@ public:
             CodeBuffer::instance().emit(val_from_set + " = load i1, i1* " + src_var);
             std::string val_from_set_i32 = gimmeANewCuteVar();
             CodeBuffer::instance().emit(val_from_set_i32 + " = zext i1 " + val_from_set + " to i32");
+            CodeBuffer::instance().emit("call void @printi(i32 "+val_from_set_i32+")");
             std::string add = gimmeANewCuteVar();
             print3ACArithmetic(add, val_from_set_i32, "add", temp_sum);
             CodeBuffer::instance().emit("store i32 " + add + ", i32* " + sum);
@@ -266,6 +269,8 @@ public:
         std::string phi_comm =
                 counter + " = phi i32 [ 0, %" + init_label + " ], [ " + index + ", %" + false_label + " ]";
 
+
+        CodeBuffer::instance().emit(phi_comm);
         int to_loop = CodeBuffer::instance().emit("br label @");
         std::string after = CodeBuffer::instance().genLabel();
 
@@ -326,13 +331,13 @@ public:
         //todo: calling to functions!
         if(op == "add"){
             CodeBuffer::instance().emit(
-                    "call i8* @print( i8* getelementptr ([30 x i8], [30 x i8]* @str_plus, i32 0, i32 0)");
+                    "call void @print( i8* getelementptr ([31 x i8], [31 x i8]* @.str_plus, i32 0, i32 0))");
         }else if(op == "sub"){
             CodeBuffer::instance().emit(
-                    "call i8* @print( i8* getelementptr ([30 x i8], [30 x i8]* @str_minus, i32 0, i32 0)");
+                    "call void @print( i8* getelementptr ([31 x i8], [31 x i8]* @.str_minus, i32 0, i32 0))");
         }else{ // op == "in"
             CodeBuffer::instance().emit(
-                    "call i8* @print( i8* getelementptr ([31 x i8], [31 x i8]* @str_in, i32 0, i32 0)");
+                    "call void @print( i8* getelementptr ([32 x i8], [32 x i8]* @.str_in, i32 0, i32 0))");
 
         }
         CodeBuffer::instance().emit("call void @exit(i32 1)");
@@ -363,7 +368,7 @@ public:
 
         print3ACArithmetic(loc_in_arr, num.var_name, "sub", to_string(set.type.getSetRange().first));
         std::string get_element =
-                "getelementptr [256 * i1], [256 * i1]* " + set.var_name + " i1 0, i1 " + loc_in_arr;
+                "getelementptr [256 x i1], [256 x i1]* " + set.var_name + ", i1 0, i32 " + loc_in_arr;
         CodeBuffer::instance().emit(loc_in_mem + " = " + get_element);
         return loc_in_mem;
     }

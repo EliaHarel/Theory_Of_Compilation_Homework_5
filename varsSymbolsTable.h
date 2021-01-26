@@ -75,9 +75,9 @@ public:
                 CodeBuffer::instance().emit(new_set.var_name + " = alloca [256 x i1]");
                 Expression::handleSet(new_set, Expression(), "init");
                 CodeBuffer::instance().emit(
-                        ptr + " = getelementptr [256 x i1]* , [256 x i1]** %locals_set, i1 0, i1 " +
+                        ptr + " = getelementptr [50 x [256 x i1]*] , [50 x [256 x i1]*]* %locals_set, i1 0, i1 " +
                         to_string(offset));
-                CodeBuffer::instance().emit("store [256 x i1] " + new_set.var_name + ", [256 x i1]* " + ptr);
+                CodeBuffer::instance().emit("store [256 x i1]* " + new_set.var_name + ", [256 x i1]** " + ptr);
             }else{
                 CodeBuffer::instance().emit(ptr + " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + to_string(offset));
                 CodeBuffer::instance().emit("store i32 0, i32* " + ptr);
@@ -159,7 +159,7 @@ public:
             }
             case Types_enum::SET_TYPE :
                 printGetPtrForSet(ptr, index, var_scope_index);
-                CodeBuffer::instance().emit("store [256 x i1] " + exp.var_name + ", [256 x i1]* " + ptr);
+                CodeBuffer::instance().emit("store [256 x i1]* " + exp.var_name + ", [256 x i1]** " + ptr);
                 break;
             default:
                 break;
@@ -187,12 +187,12 @@ public:
         int num_of_args = scopes[1].getNumArgs();
         if(offset >= 0){
             CodeBuffer::instance().emit(ptr +
-                                        " = getelementptr [50 x [256 x i1]*] , [50 x [256 x i1]*]* %locals_set, [256 x i1]* 0, [256 x i1]* " +
+                                        " = getelementptr [50 x [256 x i1]*] , [50 x [256 x i1]*]* %locals_set, i32 0, i32 " +
                                         to_string(offset));
         }else{
             CodeBuffer::instance().emit(ptr + " = getelementptr [" + to_string(num_of_args) +
                                         " x [256 x i1]*] , [" + to_string(num_of_args) +
-                                        " x [256 x i1]*]* %args_set, [256 x i1]* 0, [256 x i1]* " +
+                                        " x [256 x i1]*]* %args_set, i32 0, i32 " +
                                         to_string(offset-1));
         }
     }
