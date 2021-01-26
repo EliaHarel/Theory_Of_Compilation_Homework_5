@@ -1,0 +1,12 @@
+//default values
+
+
+void main() {
+    int x;
+    byte y;
+    bool z;
+    
+    printi(x);
+    printi(y);
+    if (not z) print("z is false.");
+}

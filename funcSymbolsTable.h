@@ -66,7 +66,9 @@ public:
 
         CodeBuffer::instance().emit(func_dec);
         CodeBuffer::instance().emit("%locals = alloca [50 x i32]");
-        CodeBuffer::instance().emit("%locals_set = alloca [50 x [256 x i1]*]");
+        //CodeBuffer::instance().emit("%locals_set = alloca [50 x [256 x i1]*]");
+        CodeBuffer::instance().emit("%locals_set = alloca [50 x i256]");
+
         //TODO: check numbers
 /*        std::string temp_ptr_1 = Expression::gimmeANewCuteVar();
 
@@ -90,12 +92,18 @@ public:
 */
 
         CodeBuffer::instance().emit("%args = alloca [" + arg_num_str + " x i32]");
-        CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x [256 x i1]*]");
+        //CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x [256 x i1]*]");
+        CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x i256]");
 
         for(int i = 0; i < num_of_args; i++){
             std::string new_var_name = Expression::gimmeANewCuteVar();
             if(ordered_args[i].getVarType().getType() == Types_enum::SET_TYPE){
                 CodeBuffer::instance().emit(
+                        new_var_name + " = getelementptr [" + arg_num_str + " x i256], [" + arg_num_str +
+                        " x i256]* %args, i256 0, i256 %" + to_string(i));
+                CodeBuffer::instance().emit("store i256 %" + to_string(i) + ", i256* " + new_var_name);
+
+               /* CodeBuffer::instance().emit(
                         new_var_name + " = getelementptr [" + arg_num_str + " x [256 x i1]*], [" +
                         arg_num_str + " x [256 x i1]*]* %args_set, [256 x i1]* 0, [256 x i1]* " +
                         to_string(i));
@@ -104,7 +112,7 @@ public:
                 CodeBuffer::instance().emit(
                         "store [256 x i1]* " + set_alloc + ", [256 x i1]** " + new_var_name);
 
-                CodeBuffer::instance().emit("store i256 %" + to_string(i) + ", [256 x i1]* " + set_alloc);
+                CodeBuffer::instance().emit("store i256 %" + to_string(i) + ", [256 x i1]* " + set_alloc);*/
 
             }else if(ordered_args[i].getVarType() == Types_enum::BOOL_TYPE){
                 CodeBuffer::instance().emit(
@@ -152,10 +160,12 @@ public:
                 break;
             }
             case Types_enum::SET_TYPE:{
+                CodeBuffer::instance().emit("ret " + TypeTollvmStr(exp.type.getType()) + " " + exp.var_name);
+/*
                 std::string loaded_arr = Expression::gimmeANewCuteVar();
                 CodeBuffer::instance().emit(loaded_arr + " = load i256, i256* " + exp.var_name);
                 CodeBuffer::instance().emit("ret i256 " + loaded_arr);
-                /*   std::string ret_val = Expression::gimmeANewCuteVar();
+                   std::string ret_val = Expression::gimmeANewCuteVar();
                    CodeBuffer::instance().emit(ret_val + " =  call i8* @malloc(i64 32)");
                    Expression dest_set (Types_enum::SET_TYPE);
                    CodeBuffer::instance().emit(dest_set.var_name + " = bitcast i8* " + ret_val + " to [256 x i1]*");
@@ -301,10 +311,12 @@ public:
                     break;
                 }
                 case Types_enum::SET_TYPE:{
-                    std::string loaded_arr = Expression::gimmeANewCuteVar();
+                 /*   std::string loaded_arr = Expression::gimmeANewCuteVar();
                     CodeBuffer::instance().emit(loaded_arr + " = load i256, i256* "
                                                 + ordered_params[i].var_name);
-                    func_call += "i256 " + loaded_arr;
+                 func_call += "i256 " + loaded_arr;
+                  */
+                    func_call += "i256 " + ordered_params[i].var_name;
                     break;
                 }
                 case Types_enum::STRING_TYPE:{

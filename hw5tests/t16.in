@@ -1,0 +1,32 @@
+//func args
+int foo(int w, byte x, bool c, int y) {
+    printi(w);
+    printi(x);
+    if (c) print("true"); else print("false");
+    printi(y);
+    return 0;
+}
+
+void foo2(bool lie1, bool lie2, int day) {
+    if (not lie1) {
+        print("OK");
+    }
+    if (lie2) {
+        print("nothing");
+    } 
+    if ( day == 2) {
+        print("greaaaaat!");
+    }
+}
+
+void main() {
+    foo(4,7b,true,15);
+    foo(1b,6b,false,15);
+    byte x = 89b;
+    byte y = 0b;
+    bool z = true;
+    foo(x,y,z,x);
+    foo(x + 25,y - 53b,88 >= x, 125 * x * (y+12));
+
+    foo2(1 > 2, (true or false) and false, 2);
+}

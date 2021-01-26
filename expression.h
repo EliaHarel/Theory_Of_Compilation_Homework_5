@@ -446,8 +446,12 @@ public:
                 break;
             }
             case Types_enum::SET_TYPE:
+                CodeBuffer::instance().emit(new_var.var_name + " = add i256 0, " + var_name);
+
+/*
                 CodeBuffer::instance().emit(new_var.var_name + " alloca [256 x i1]");
                 CodeBuffer::instance().emit("store i256 " + var_name + " [256 x i1]*" + new_var.var_name);
+*/
                 break;
             default:
                 break;

@@ -1,0 +1,17 @@
+void checkDay(int e1) {
+	if (e1 == 2) {
+		print("~IT'S TAAACO TUUUUUUESDAAAAY!~");
+		print("One taco for me please!");
+		int i = 0;
+		while (i < e1) {
+			print("Another taco for me please!");
+			i = i + 1;
+		}
+	}
+}
+
+void main()
+{
+	int day = 2;
+	checkDay(day);
+}

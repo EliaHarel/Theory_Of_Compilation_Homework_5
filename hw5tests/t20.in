@@ -1,0 +1,36 @@
+//passing by value
+
+void change(int day, int z, bool w, byte a) {
+    printi(day);
+    printi(z);
+    if (w) {
+        print("ok");
+    }
+    printi(a);
+    day = 1;
+    z = z + 1;
+    w = false;
+    a = a + 1b;
+    printi(day);
+    printi(z);
+    if (w) {
+        print("ok");
+    }
+    printi(a);
+    return;
+}
+
+void main() {
+    int day = 2;
+    int z = 3;
+    bool w = true;
+    byte a = 255b;
+    change(day, z, w, a); //values in this function should not change after this call
+    printi(day);
+    printi(z);
+    if (w) {
+        print("ok");
+    }
+    printi(a);
+    return;
+}
