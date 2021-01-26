@@ -209,10 +209,10 @@ public:
         std::string shift = gimmeANewCuteVar();
         CodeBuffer::instance().emit(shift + " = zext i32 " + loc_in_arr + " to i256");
 
-        if( op == "add"){
-            CodeBuffer::instance().emit(new_set.var_name + " = call i256 @SetAdd(i256 " + set.var_name = ", i256 " + shift + ")");
-        }else{ //op == "sub"
-            CodeBuffer::instance().emit(new_set.var_name + " = call i256 @SetSub(i256 " + set.var_name = ", i256 " + shift + ")");
+        if( op == "+"){
+            CodeBuffer::instance().emit(new_set.var_name + " = call i256 @SetAdd(i256 " + set.var_name + ", i256 " + shift + ")");
+        }else{ //op == "-"
+            CodeBuffer::instance().emit(new_set.var_name + " = call i256 @SetSub(i256 " + set.var_name + ", i256 " + shift + ")");
         }
 /*        CodeBuffer::instance().emit("store i1 " + to_string(val) + ", i1* " + loc_in_mem);*/
     }
@@ -320,7 +320,7 @@ public:
         std::string zext = Expression::gimmeANewCuteVar();
         CodeBuffer::instance().emit(zext + " = zext i32 "+ (*this).var_name + " to i256");
         std::string is_in_arr = Expression::gimmeANewCuteVar();
-        CodeBuffer::instance().emit(is_in_arr + " = call i1 @setContains(i256 " + t.var_name + ", i256 " + zext + ")");
+        CodeBuffer::instance().emit(is_in_arr + " = call i1 @SetContains(i256 " + t.var_name + ", i256 " + zext + ")");
 
         int loc = CodeBuffer::instance().emit("br i1 " + is_in_arr + ", label @, label @");
 
@@ -357,10 +357,10 @@ public:
         std::string false_label = CodeBuffer::instance().genLabel();
         //todo: save thr  std::string in advance and add reference to it
         //todo: calling to functions!
-        if(op == "add"){
+        if(op == "+"){
             CodeBuffer::instance().emit(
                     "call void @print( i8* getelementptr ([31 x i8], [31 x i8]* @.str_plus, i32 0, i32 0))");
-        }else if(op == "sub"){
+        }else if(op == "-"){
             CodeBuffer::instance().emit(
                     "call void @print( i8* getelementptr ([31 x i8], [31 x i8]* @.str_minus, i32 0, i32 0))");
         }else{ // op == "in"
@@ -434,7 +434,7 @@ public:
             exit(1);
         }
         Expression new_var(Types_enum::INT_TYPE);
-        CodeBuffer::instance().emit(new_var.var_name + " = call i32 @setCast(i256 " + (*this).var_name + " )");
+        CodeBuffer::instance().emit(new_var.var_name + " = call i32 @SetCast(i256 " + (*this).var_name + " )");
        /* std::string reg = handleSet(*this, Expression(), "sum");*/
         return new_var;
     }
