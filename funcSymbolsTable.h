@@ -21,9 +21,6 @@ public:
     FuncSymbolsTable() : curr_func(-1), funcs_vec(std::vector<Function>()),
                          funcs_map(std::map<std::string, int>()),
                          main_func(false){}
-//    static FuncSymbolsTable *funcs_table;
-
-//    static FuncSymbolsTable& getSymbolFunc();
 
     bool isDefined(const std::string& id){
         return funcs_map.find(id) != funcs_map.end();

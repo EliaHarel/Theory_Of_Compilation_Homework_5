@@ -49,7 +49,7 @@ void castArrToi256(){
 void printGlobalFuncs(){
     CodeBuffer::instance().emitGlobal("declare i32 @printf(i8*, ...)");
     CodeBuffer::instance().emitGlobal("declare void @exit(i32)");
-    CodeBuffer::instance().emitGlobal("@.int_specifier = internal constant [4 x i8] c\"%d\\0A\\00\\");
+    CodeBuffer::instance().emitGlobal("@.int_specifier = internal constant [4 x i8] c\"%d\\0A\\00\"");
     CodeBuffer::instance().emitGlobal("@.str_specifier = internal constant [2 x i8] c\"%s\"");
 
     CodeBuffer::instance().emitGlobal("define void @printi(i32) {");
