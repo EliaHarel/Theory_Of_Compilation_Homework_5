@@ -57,7 +57,8 @@ public:
     }
 
     bool operator==(Types& var) const{
-        return ty == var.ty && start_index == var.start_index && end_index == var.end_index;
+//        return ty == var.ty && start_index == var.start_index && end_index == var.end_index;
+        return ty == var.ty;
     }
 
     bool operator!=(Types_enum var) const{ return !(*this == var); }

@@ -58,6 +58,10 @@ public:
    //print the content of the global buffer to stdout
    void printGlobalBuffer();
 
+    int getsize(){
+        return CodeBuffer::instance().buffer.size();
+    }
+
 };
 
 #endif

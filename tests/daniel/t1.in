@@ -1,9 +1,0 @@
-//nested loops
-void main() {
-    int i = 1;
-    while(i < 12) {
-        if (i == 0)
-            break;
-        i = i + 1;
-    }
-}

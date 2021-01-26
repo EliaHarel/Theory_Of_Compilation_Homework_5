@@ -1,4 +1,0 @@
-//div by zero (constant)
-void main() {
-    printi(9/0);
-}

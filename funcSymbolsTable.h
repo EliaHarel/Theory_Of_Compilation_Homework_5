@@ -100,7 +100,7 @@ public:
             if(ordered_args[i].getVarType().getType() == Types_enum::SET_TYPE){
                 CodeBuffer::instance().emit(
                         new_var_name + " = getelementptr [" + arg_num_str + " x i256], [" + arg_num_str +
-                        " x i256]* %args, i256 0, i256 %" + to_string(i));
+                        " x i256]* %args_set, i256 0, i256 %" + to_string(i));
                 CodeBuffer::instance().emit("store i256 %" + to_string(i) + ", i256* " + new_var_name);
 
                /* CodeBuffer::instance().emit(
@@ -248,7 +248,7 @@ public:
 
         int back_index = exps_vec.size() - 1;
         for(int i = 0; i < args.size(); i++){
-            if(args[i].getVarType() != exps_vec[back_index].type){
+            if(args[i].getVarType().getType() != exps_vec[back_index].type.getType()){
                 if(!(args[i].getVarType() == Types_enum::INT_TYPE &&
                      exps_vec[back_index].type == Types_enum::BYTE_TYPE)){
                     errorPrototypeMismatch(yylineno, id, args_types);
