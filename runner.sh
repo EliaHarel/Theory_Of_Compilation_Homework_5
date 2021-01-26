@@ -26,12 +26,12 @@ function run_all_tests {
 
 }
 
-# if [ "$#" -ne 1 ]; then
-# echo "Illegal number of parameters. Must be 1."
-# exit
-# fi
+if [ "$#" -ne 0 ]; then
+  make
+fi
 
-make
+
+
 cp hw5 hw5tests/
 
 cd hw5tests
