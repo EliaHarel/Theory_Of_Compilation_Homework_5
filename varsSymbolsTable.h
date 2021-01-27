@@ -71,20 +71,33 @@ public:
             // TODO Maybe malloc here, if not, remember to malloc before passing a set as an argument to a function
             // Conjecture: one cannot interfere with a caller function's stack when in the callee function.
             if (type.getType() == Types_enum::SET_TYPE) {
+                std::string new_set = Expression::gimmeANewCuteVar();
+                std::string low = Expression::gimmeANewCuteVar();
+                std::string  high = Expression::gimmeANewCuteVar();
+                CodeBuffer::instance().emit(low + " = add i32 0, " + to_string(type.getSetRange().first));
+                CodeBuffer::instance().emit(high + " = add i32 0, " + to_string(type.getSetRange().second));
+                CodeBuffer::instance().emit(new_set + " = call i310 @buildSet(i256 0, i32 " + low + ", i32 " + high + ")");
+
                 CodeBuffer::instance().emit(
-                        ptr + " = getelementptr [50 x i256], [50 x i256]* %locals_set, i256 0, i256 " + to_string(offset));
+                        ptr + " = getelementptr inbounds [50 x i310], [50 x i310]* %locals_set, i310 0, i310 " + to_string(offset));
+                CodeBuffer::instance().emit("store i310 " +new_set + ", i310* " + ptr);
+
+/*
+                CodeBuffer::instance().emit(
+                        ptr + " = getelementptr inbounds [50 x i256], [50 x i256]* %locals_set, i256 0, i256 " + to_string(offset));
                 CodeBuffer::instance().emit("store i256 0, i256* " + ptr);
+*/
 
                 /*Expression new_set(Types_enum::SET_TYPE);
                 CodeBuffer::instance().emit(new_set.var_name + " = alloca [256 x i1]");
                 Expression::handleSet(new_set, Expression(), "init");
                 CodeBuffer::instance().emit(
-                        ptr + " = getelementptr [50 x [256 x i1]*] , [50 x [256 x i1]*]* %locals_set, i1 0, i1 " +
+                        ptr + " = getelementptr inbounds [50 x [256 x i1]*] , [50 x [256 x i1]*]* %locals_set, i1 0, i1 " +
                         to_string(offset));
                 CodeBuffer::instance().emit("store [256 x i1]* " + new_set.var_name + ", [256 x i1]** " + ptr);*/
             } else {
                 CodeBuffer::instance().emit(
-                        ptr + " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + to_string(offset));
+                        ptr + " = getelementptr inbounds [50 x i32], [50 x i32]* %locals, i32 0, i32 " + to_string(offset));
                 CodeBuffer::instance().emit("store i32 0, i32* " + ptr);
             }
         }
@@ -169,7 +182,9 @@ public:
             }
             case Types_enum::SET_TYPE :{
                 printGetPtrForSet(ptr, index, var_scope_index);
-                CodeBuffer::instance().emit("store i256 " + exp.var_name + ", i256* " + ptr);
+                CodeBuffer::instance().emit("store i310 " + exp.var_name + ", i310* " + ptr);
+
+                //CodeBuffer::instance().emit("store i256 " + exp.var_name + ", i256* " + ptr);
                 scopes[var_scope_index].vars[index].setType(exp.type);
 
 /*
@@ -189,12 +204,12 @@ public:
         int num_of_args = scopes[1].getNumArgs();
         if (offset >= 0) {
             CodeBuffer::instance().emit(
-                    ptr + " = getelementptr [50 x i32] , [50 x i32]* %locals, i32 0, i32 " +
+                    ptr + " = getelementptr inbounds [50 x i32] , [50 x i32]* %locals, i32 0, i32 " +
                     to_string(offset));
         } else {
             offset = abs(offset);
             CodeBuffer::instance().emit(
-                    ptr + " = getelementptr [" + to_string(num_of_args) + " x i32] , [" +
+                    ptr + " = getelementptr inbounds [" + to_string(num_of_args) + " x i32] , [" +
                     to_string(num_of_args) + " x i32]* %args, i32 0, i32 " + to_string(offset - 1));
 
         }
@@ -205,12 +220,13 @@ public:
         int num_of_args = scopes[1].getNumArgs();
         if (offset >= 0) {
             CodeBuffer::instance().emit(ptr +
-                                        " = getelementptr [50 x i256] , [50 x i256]* %locals_set, i256 0, i256 " +
+                                        " = getelementptr inbounds [50 x i310] , [50 x i310]* %locals_set, i310 0, i310 " +
                                         to_string(offset));
         } else {
-            CodeBuffer::instance().emit(ptr + " = getelementptr [" + to_string(num_of_args) +
-                                        " x i256] , [" + to_string(num_of_args) +
-                                        " x i256]* %args_set, i256 0, i256 " +
+            offset = abs(offset);
+            CodeBuffer::instance().emit(ptr + " = getelementptr inbounds [" + to_string(num_of_args) +
+                                        " x i310] , [" + to_string(num_of_args) +
+                                        " x i310]* %args_set, i310 0, i310 " +
                                         to_string(offset - 1));
         }
         /* if(offset >= 0){
@@ -326,8 +342,8 @@ public:
             }
             case Types_enum::SET_TYPE: {
                 printGetPtrForSet(ptr, index, var_scope_index);
-                CodeBuffer::instance().emit(new_var.var_name + " = load i256, i256* " + ptr);
-
+                CodeBuffer::instance().emit(new_var.var_name + " = load i310, i310* " + ptr);
+                //CodeBuffer::instance().emit(new_var.var_name + " = load i256, i256* " + ptr);
 
 /*
                 CodeBuffer::instance().emit(new_var.var_name + " = load [256 x i1]*, [256 x i1]** " + ptr);
@@ -341,7 +357,6 @@ public:
 
         return new_var;
     }
-
 
     void checkWhile(const std::string &state) {
         if (!scopes[curr_scope].getWhile()) {

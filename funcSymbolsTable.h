@@ -66,14 +66,15 @@ public:
 
         CodeBuffer::instance().emit(func_dec);
         CodeBuffer::instance().emit("%locals = alloca [50 x i32]");
+        CodeBuffer::instance().emit("%locals_set = alloca [50 x i310]");
         //CodeBuffer::instance().emit("%locals_set = alloca [50 x [256 x i1]*]");
-        CodeBuffer::instance().emit("%locals_set = alloca [50 x i256]");
+        //CodeBuffer::instance().emit("%locals_set = alloca [50 x i256]");
 
         //TODO: check numbers
 /*        std::string temp_ptr_1 = Expression::gimmeANewCuteVar();
 
         CodeBuffer::instance().emit(
-                temp_ptr_1 + " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 0");
+                temp_ptr_1 + " = getelementptr inbounds [50 x i32], [50 x i32]* %locals, i32 0, i32 0");
         std::string temp_ptr_2 = Expression::gimmeANewCuteVar();
         CodeBuffer::instance().emit(
                 temp_ptr_2 + " = bitcast i32* " + temp_ptr_1 + " to i8*");
@@ -83,7 +84,7 @@ public:
 
         temp_ptr_1 = Expression::gimmeANewCuteVar();
         CodeBuffer::instance().emit(temp_ptr_1 +
-                                    " = getelementptr [50 x [256 x i1]*], [50 x [256 x i1]*]* %locals_set, [256 x i1]* 0, [256 x i1]* 0");
+                                    " = getelementptr inbounds [50 x [256 x i1]*], [50 x [256 x i1]*]* %locals_set, [256 x i1]* 0, [256 x i1]* 0");
         temp_ptr_2 = Expression::gimmeANewCuteVar();
         CodeBuffer::instance().emit(
                 temp_ptr_2 + " = bitcast [256 x i1]** " + temp_ptr_1 + " to i8*");
@@ -92,19 +93,26 @@ public:
 */
 
         CodeBuffer::instance().emit("%args = alloca [" + arg_num_str + " x i32]");
+        CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x i310]");
         //CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x [256 x i1]*]");
-        CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x i256]");
+        //CodeBuffer::instance().emit("%args_set = alloca [" + arg_num_str + " x i256]");
 
         for(int i = 0; i < num_of_args; i++){
             std::string new_var_name = Expression::gimmeANewCuteVar();
             if(ordered_args[i].getVarType().getType() == Types_enum::SET_TYPE){
                 CodeBuffer::instance().emit(
-                        new_var_name + " = getelementptr [" + arg_num_str + " x i256], [" + arg_num_str +
-                        " x i256]* %args_set, i256 0, i256 %" + to_string(i));
-                CodeBuffer::instance().emit("store i256 %" + to_string(i) + ", i256* " + new_var_name);
+                        new_var_name + " = getelementptr inbounds [" + arg_num_str + " x i310], [" + arg_num_str +
+                        " x i310]* %args_set, i310 0, i310 " + to_string(i));
+                CodeBuffer::instance().emit("store i310 %" + to_string(i) + ", i310* " + new_var_name);
+
 
                /* CodeBuffer::instance().emit(
-                        new_var_name + " = getelementptr [" + arg_num_str + " x [256 x i1]*], [" +
+                        new_var_name + " = getelementptr inbounds [" + arg_num_str + " x i256], [" + arg_num_str +
+                        " x i256]* %args_set, i256 0, i256 %" + to_string(i));
+                CodeBuffer::instance().emit("store i256 %" + to_string(i) + ", i256* " + new_var_name);
+*/
+               /* CodeBuffer::instance().emit(
+                        new_var_name + " = getelementptr inbounds [" + arg_num_str + " x [256 x i1]*], [" +
                         arg_num_str + " x [256 x i1]*]* %args_set, [256 x i1]* 0, [256 x i1]* " +
                         to_string(i));
                 std::string set_alloc = Expression::gimmeANewCuteVar();
@@ -116,14 +124,14 @@ public:
 
             }else if(ordered_args[i].getVarType() == Types_enum::BOOL_TYPE){
                 CodeBuffer::instance().emit(
-                        new_var_name + " = getelementptr [" + arg_num_str + " x i32], [" + arg_num_str +
+                        new_var_name + " = getelementptr inbounds [" + arg_num_str + " x i32], [" + arg_num_str +
                         " x i32]* %args, i32 0, i32 " + to_string(i));
                 std::string bool_name = Expression::gimmeANewCuteVar();
                 CodeBuffer::instance().emit(bool_name + " = zext i1 %" + to_string(i) + " to i32");
                 CodeBuffer::instance().emit("store i32 " + bool_name + ", i32* " + new_var_name);
             }else{
                 CodeBuffer::instance().emit(
-                        new_var_name + " = getelementptr [" + arg_num_str + " x i32], [" + arg_num_str +
+                        new_var_name + " = getelementptr inbounds [" + arg_num_str + " x i32], [" + arg_num_str +
                         " x i32]* %args, i32 0, i32 " + to_string(i));
                 CodeBuffer::instance().emit("store i32 %" + to_string(i) + ", i32* " + new_var_name);
             }
@@ -140,7 +148,6 @@ public:
         CodeBuffer::instance().emit(
                 "ret " + TypeTollvmStr(type.getType()) + " " + defaultVal(type.getType()));
     }
-
 
     static void returnExp(const Expression& exp){
         switch (exp.type.getType()){
@@ -220,7 +227,7 @@ public:
                 type_str = "void";
                 break;
             case Types_enum::SET_TYPE :
-                type_str = "i256";
+                type_str = "i310";
                 break;
             default:
                 break;
@@ -316,11 +323,11 @@ public:
                                                 + ordered_params[i].var_name);
                  func_call += "i256 " + loaded_arr;
                   */
-                    func_call += "i256 " + ordered_params[i].var_name;
+                    func_call += "i310 " + ordered_params[i].var_name;
                     break;
                 }
                 case Types_enum::STRING_TYPE:{
-                    func_call += "i8* getelementptr ([" + to_string(ordered_params[i].str_length) +
+                    func_call += "i8* getelementptr inbounds ([" + to_string(ordered_params[i].str_length) +
                                  " x i8], [" + to_string(ordered_params[i].str_length) + " x i8]* " +
                                  ordered_params[i].var_name + ", i32 0, i32 0)";
                 }

@@ -136,7 +136,7 @@ public:
             int loc = CodeBuffer::instance().emit("br i1 " + cond + ", label @, label @");
             std::string true_label = CodeBuffer::instance().genLabel();
             CodeBuffer::instance().emit(
-                    "call void @print( i8* getelementptr ([24 x i8], [24 x i8]* @.str_zero, i32 0, i32 0))");
+                    "call void @print( i8* getelementptr inbounds ([24 x i8], [24 x i8]* @.str_zero, i32 0, i32 0))");
             CodeBuffer::instance().emit("call void @exit(i32 1)");
             int true_to_exit = CodeBuffer::instance().emit("br label @");
 
@@ -203,17 +203,27 @@ public:
     }
 
     static void changeSet(const Expression& new_set, const Expression& set, const Expression& num, const std::string& op){
-        checkSetVal(set, num, op);
+        //checkSetVal(set, num, op);
+/*
         std::string loc_in_arr = gimmeANewCuteVar();
         print3ACArithmetic(loc_in_arr, num.var_name, "sub", to_string(set.type.getSetRange().first));
-        std::string shift = gimmeANewCuteVar();
-        CodeBuffer::instance().emit(shift + " = zext i32 " + loc_in_arr + " to i256");
+*/
 
         if( op == "+"){
-            CodeBuffer::instance().emit(new_set.var_name + " = call i256 @SetAdd(i256 " + set.var_name + ", i256 " + shift + ")");
-        }else{ //op == "-"
-            CodeBuffer::instance().emit(new_set.var_name + " = call i256 @SetSub(i256 " + set.var_name + ", i256 " + shift + ")");
+            CodeBuffer::instance().emit(new_set.var_name + " = call i310 @SetAdd(i310 " + set.var_name + ", i32 " + num.var_name + ")");
+        }else { //op == "-"
+            CodeBuffer::instance().emit(
+                    new_set.var_name + " = call i310 @SetSub(i310 " + set.var_name + ", i32 " + num.var_name + ")");
         }
+
+            /* std::string shift = gimmeANewCuteVar();
+             CodeBuffer::instance().emit(shift + " = zext i32 " + loc_in_arr + " to i256");
+
+             if( op == "+"){
+                 CodeBuffer::instance().emit(new_set.var_name + " = call i256 @SetAdd(i256 " + set.var_name + ", i256 " + shift + ")");
+             }else{ //op == "-"
+                 CodeBuffer::instance().emit(new_set.var_name + " = call i256 @SetSub(i256 " + set.var_name + ", i256 " + shift + ")");
+             }*/
 /*        CodeBuffer::instance().emit("store i1 " + to_string(val) + ", i1* " + loc_in_mem);*/
     }
 
@@ -253,7 +263,7 @@ public:
         std::string false_label = CodeBuffer::instance().genLabel();
         std::string src_var = gimmeANewCuteVar();
         std::string src_comm =
-                "getelementptr [256 x i1], [256 x i1]* " + src.var_name + ", i1 0, i32 " + counter;
+                "getelementptr inbounds [256 x i1], [256 x i1]* " + src.var_name + ", i1 0, i32 " + counter;
         CodeBuffer::instance().emit(src_var + " = " + src_comm);
 
         //TODO: if this doesn't work - memcpy, memset
@@ -262,7 +272,7 @@ public:
             CodeBuffer::instance().emit(val + " = load i1, i1* " + src_var);
             std::string dst_var = gimmeANewCuteVar();
             std::string dst_comm =
-                    "getelementptr [256 x i1], [256 x i1]* " + dst.var_name + ", i1 0, i32 " + counter;
+                    "getelementptr inbounds [256 x i1], [256 x i1]* " + dst.var_name + ", i1 0, i32 " + counter;
             CodeBuffer::instance().emit(dst_var + " = " + src_comm);
             CodeBuffer::instance().emit("store i1 " + val + ", i1* " + dst_var);
         }else if(func == "init"){
@@ -313,14 +323,21 @@ public:
             output::errorMismatch(yylineno);
             exit(1);
         }
-        checkSetVal(t, *this, "in");
+        //checkSetVal(t, *this, "in");
+/*
         std::string loc_in_arr = gimmeANewCuteVar();
         print3ACArithmetic(loc_in_arr, (*this).var_name, "sub", to_string(t.type.getSetRange().first));
+*/
 
+/*
         std::string zext = Expression::gimmeANewCuteVar();
         CodeBuffer::instance().emit(zext + " = zext i32 "+ loc_in_arr + " to i256");
         std::string is_in_arr = Expression::gimmeANewCuteVar();
         CodeBuffer::instance().emit(is_in_arr + " = call i1 @SetContains(i256 " + t.var_name + ", i256 " + zext + ")");
+*/
+
+        std::string is_in_arr = Expression::gimmeANewCuteVar();
+        CodeBuffer::instance().emit(is_in_arr + " = call i1 @SetContains(i310 " + t.var_name + ", i32 " + (*this).var_name + ")");
 
         int loc = CodeBuffer::instance().emit("br i1 " + is_in_arr + ", label @, label @");
 
@@ -343,14 +360,26 @@ public:
         return new_var;
     }
 
-
-
+/*
     static void checkSetVal(const Expression& set, const Expression& num, const std::string& op){
+        std::string low = Expression::gimmeANewCuteVar();
+        std::string high = Expression::gimmeANewCuteVar();
+
+        CodeBuffer::instance().emit(low + " = call i32 @getMinBound(i310 " + set.var_name + ")");
+        CodeBuffer::instance().emit(high + " = call i32 @getMaxBound(i310 " + set.var_name + ")");
+
         std::string cond1_name = gimmeANewCuteVar();
         //sge: interprets the operands as signed values and yields true if op1 is greater than or equal to op2.
+*/
+/*
         std::string cond1_code =
                 cond1_name + " = icmp sge i32 " + num.var_name + ", " +
                 to_string(set.type.getSetRange().first);
+*//*
+
+        std::string cond1_code =
+                cond1_name + " = icmp sge i32 " + num.var_name + ", " + low;
+
         CodeBuffer::instance().emit(cond1_code);
         int cond1_loc = CodeBuffer::instance().emit("br i1 " + cond1_name + ", label @, label @ ");
 
@@ -359,13 +388,13 @@ public:
         //todo: calling to functions!
         if(op == "+"){
             CodeBuffer::instance().emit(
-                    "call void @print( i8* getelementptr ([31 x i8], [31 x i8]* @.str_plus, i32 0, i32 0))");
+                    "call void @print( i8* getelementptr inbounds ([31 x i8], [31 x i8]* @.str_plus, i32 0, i32 0))");
         }else if(op == "-"){
             CodeBuffer::instance().emit(
-                    "call void @print( i8* getelementptr ([31 x i8], [31 x i8]* @.str_minus, i32 0, i32 0))");
+                    "call void @print( i8* getelementptr inbounds ([31 x i8], [31 x i8]* @.str_minus, i32 0, i32 0))");
         }else{ // op == "in"
             CodeBuffer::instance().emit(
-                    "call void @print( i8* getelementptr ([32 x i8], [32 x i8]* @.str_in, i32 0, i32 0))");
+                    "call void @print( i8* getelementptr inbounds ([32 x i8], [32 x i8]* @.str_in, i32 0, i32 0))");
 
         }
         CodeBuffer::instance().emit("call void @exit(i32 1)");
@@ -375,9 +404,16 @@ public:
         std::string true1_label = CodeBuffer::instance().genLabel();
         std::string cond2_name = gimmeANewCuteVar();
         //sle: interprets the operands as signed values and yields true if op1 is less than or equal to op2..
+*/
+/*
         std::string cond2_code =
                 cond2_name + " = icmp sle i32 " + num.var_name + ", " +
                 to_string(set.type.getSetRange().second);
+*//*
+
+        std::string cond2_code =
+                cond2_name + " = icmp sle i32 " + num.var_name + ", " + high;
+
         CodeBuffer::instance().emit(cond2_code);
         int cond2_loc = CodeBuffer::instance().emit("br i1 " + cond2_name + ", label @, label @");
         std::string true2_label = CodeBuffer::instance().genLabel();
@@ -389,6 +425,7 @@ public:
         CodeBuffer::instance().bpatch(CodeBuffer::makelist({irrelevant, FIRST}), true1_label);
 
     }
+*/
 
     static std::string getLocInSet(const Expression& set, const Expression& num){
         std::string loc_in_arr = gimmeANewCuteVar();
@@ -396,7 +433,7 @@ public:
 
         print3ACArithmetic(loc_in_arr, num.var_name, "sub", to_string(set.type.getSetRange().first));
         std::string get_element =
-                "getelementptr [256 x i1], [256 x i1]* " + set.var_name + ", i1 0, i32 " + loc_in_arr;
+                "getelementptr inbounds [256 x i1], [256 x i1]* " + set.var_name + ", i1 0, i32 " + loc_in_arr;
         CodeBuffer::instance().emit(loc_in_mem + " = " + get_element);
         return loc_in_mem;
     }
@@ -434,7 +471,7 @@ public:
             exit(1);
         }
         Expression new_var(Types_enum::INT_TYPE);
-        CodeBuffer::instance().emit(new_var.var_name + " = call i32 @SetCast(i256 " + (*this).var_name + " )");
+        CodeBuffer::instance().emit(new_var.var_name + " = call i32 @SetCast(i310 " + (*this).var_name + " )");
        /* std::string reg = handleSet(*this, Expression(), "sum");*/
         return new_var;
     }
@@ -472,7 +509,11 @@ public:
                 break;
             }
             case Types_enum::SET_TYPE:
+/*
                 CodeBuffer::instance().emit(new_var.var_name + " = add i256 0, " + var_name);
+*/
+
+                CodeBuffer::instance().emit(new_var.var_name + " = add i310 0, " + var_name);
 
 /*
                 CodeBuffer::instance().emit(new_var.var_name + " alloca [256 x i1]");
