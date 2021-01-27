@@ -167,14 +167,18 @@ public:
 
                 break;
             }
-            case Types_enum::SET_TYPE :
+            case Types_enum::SET_TYPE :{
                 printGetPtrForSet(ptr, index, var_scope_index);
                 CodeBuffer::instance().emit("store i256 " + exp.var_name + ", i256* " + ptr);
+                scopes[var_scope_index].vars[index].setType(exp.type);
 
 /*
                 CodeBuffer::instance().emit("store [256 x i1]* " + exp.var_name + ", [256 x i1]** " + ptr);
 */
                 break;
+
+            }
+
             default:
                 break;
         }

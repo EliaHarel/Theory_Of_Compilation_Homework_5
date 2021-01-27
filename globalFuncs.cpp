@@ -72,8 +72,10 @@ void printGlobalFuncs(){
 
     CodeBuffer::instance().emitGlobal(R"(declare i256 @llvm.fshl.i256(i256, i256, i256))");
     CodeBuffer::instance().emitGlobal(R"(declare i256 @llvm.ctpop.i256(i256))");
+
     CodeBuffer::instance().emitGlobal(R"(define i256 @SetAdd(i256, i256) {)");
-    CodeBuffer::instance().emitGlobal(R"(   %temp_num = call i256 @llvm.fshl.i256(i256 1, i256 1, i256 %1))");
+    CodeBuffer::instance().emitGlobal(R"(   call i256 @llvm.fshl.i256(i256 1, i256 0, i256 %1))");
+    CodeBuffer::instance().emitGlobal(R"(   %temp_num = call i256 @llvm.fshl.i256(i256 1, i256 0, i256 %1))");
     CodeBuffer::instance().emitGlobal(R"(   %set_res = or i256 %0, %temp_num)");
     CodeBuffer::instance().emitGlobal(R"(   ret i256 %set_res)");
     CodeBuffer::instance().emitGlobal(R"(})");
@@ -84,14 +86,14 @@ void printGlobalFuncs(){
     CodeBuffer::instance().emitGlobal(R"(        ret i256 %set_res)");
     CodeBuffer::instance().emitGlobal(R"(})");
     CodeBuffer::instance().emitGlobal(R"(define i1 @SetContains(i256, i256) {)");
-    CodeBuffer::instance().emitGlobal(R"(   %temp_num = call i256 @llvm.fshl.i256(i256 1, i256 1, i256 %1))");
+    CodeBuffer::instance().emitGlobal(R"(   %temp_num = call i256 @llvm.fshl.i256(i256 1, i256 0, i256 %1))");
     CodeBuffer::instance().emitGlobal(R"(   %res = and i256 %0, %temp_num)");
     CodeBuffer::instance().emitGlobal(R"(   %cond = icmp ne i256 0, %res)");
     CodeBuffer::instance().emitGlobal(R"(   br i1 %cond, label %Return_True, label %Return_False)");
     CodeBuffer::instance().emitGlobal(R"(   Return_True:)");
-    CodeBuffer::instance().emitGlobal(R"(      ret i1 true)");
+    CodeBuffer::instance().emitGlobal(R"(      ret i1 1)");
     CodeBuffer::instance().emitGlobal(R"(   Return_False:)");
-    CodeBuffer::instance().emitGlobal(R"(      ret i1 false)");
+    CodeBuffer::instance().emitGlobal(R"(      ret i1 0)");
     CodeBuffer::instance().emitGlobal(R"(})");
     CodeBuffer::instance().emitGlobal(R"(    define i32 @SetCast(i256) {)");
     CodeBuffer::instance().emitGlobal(R"(        %res_256 = call i256 @llvm.ctpop.i256(i256 %0))");

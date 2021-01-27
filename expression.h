@@ -30,7 +30,7 @@ public:
 
     Expression() : type(Types_enum::UNDEFINED_TYPE), var_name(gimmeANewCuteVar()){};
 
-    Expression(const Expression& rhs) : type(rhs.type), var_name(rhs.var_name), str_length(rhs.str_length),
+    Expression(const Expression& rhs) : type(rhs .type), var_name(rhs.var_name), str_length(rhs.str_length),
                                         true_list(rhs.true_list), false_list(rhs.false_list){};
 
     explicit Expression(const Types& t) : type(t), var_name(gimmeANewCuteVar()){};
@@ -318,7 +318,7 @@ public:
         print3ACArithmetic(loc_in_arr, (*this).var_name, "sub", to_string(t.type.getSetRange().first));
 
         std::string zext = Expression::gimmeANewCuteVar();
-        CodeBuffer::instance().emit(zext + " = zext i32 "+ (*this).var_name + " to i256");
+        CodeBuffer::instance().emit(zext + " = zext i32 "+ loc_in_arr + " to i256");
         std::string is_in_arr = Expression::gimmeANewCuteVar();
         CodeBuffer::instance().emit(is_in_arr + " = call i1 @SetContains(i256 " + t.var_name + ", i256 " + zext + ")");
 

@@ -50,6 +50,10 @@ public:
         return type;
     }
 
+    void setType( Types new_type){
+        type = new_type;
+    }
+
     int getOffset() const{
         return offset;
     }
